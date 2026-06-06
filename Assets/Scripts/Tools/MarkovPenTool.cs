@@ -1,100 +1,191 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TiltBrush
 {
-    public class MarkovPenTool : BaseTool
+    /// @brief Brush tool that fits a Catmull-Rom spline to the user's stroke in real time
+    /// and synthesizes a style curve along it via ComputeStyleOffset.
+    /// The offset method is intentionally isolated so it can be replaced with
+    /// DCMM-based Markov sampling (Lang & Alexa 2016) in a later iteration.
+    public class MarkovPenTool : FreePaintTool
     {
-        // The parent of all of our tool's visual indicator objects.
-        private GameObject m_ToolDirectionIndicator;
+        [Header("Sine Wave")]
+        [SerializeField] private float m_SineAmplitude = 0.5f;
+        [SerializeField] private float m_SineFrequency = 0.6f;
+        [SerializeField] private float m_SineAxisAngle = 45f;
 
-        // Whether this tool should follow the controller or not.
-        private bool m_IsLockedToController;
+        [Header("Spline Debug")]
+        [SerializeField] private bool m_ShowSpline = false;
+        [SerializeField] private LineRenderer m_SplineDebugRenderer;
 
-        // The controller that this tool is attached to.
-        private Transform m_BrushController;
+        private readonly List<Vector3> m_ControlPoints = new();
+        private float m_SplineArcLength;
+        private Vector3 m_LastPos;
+        private bool m_StrokeStarted;
+        private bool m_WasTriggerHeld;
 
-        // Init is similar to Awake(), and should be used for initializing references and other setup code.
+        // Minimum distance between committed control points to avoid near-zero tangents.
+        private const float k_MinPointSpacing = 0.015f;
+        // Line renderer samples per spline segment used in debug mode.
+        private const int k_DebugSamplesPerSegment = 12;
+
         public override void Init()
         {
             base.Init();
-
-            // Get the visual direction indicator by name, like FlyTool does.
-            m_ToolDirectionIndicator = transform.Find("DirectionIndicator").gameObject;
+            ResetStroke();
         }
 
-        // What to do when the tool is enabled or disabled.
-        public override void EnableTool(bool isEnabled)
+        /// @brief Enables or disables the tool. Resets the current stroke on disable.
+        /// @param bEnable true to activate the tool, false to deactivate it.
+        public override void EnableTool(bool bEnable)
         {
-            base.EnableTool(isEnabled);
-
-            if (isEnabled)
-            {
-                m_IsLockedToController = m_SketchSurface.IsInFreePaintMode();
-
-                if (m_IsLockedToController)
-                {
-                    m_BrushController = InputManager.m_Instance.GetController(InputManager.ControllerName.Brush);
-                }
-
-            }
-
-            // Make sure our UI reticle isn't active.
-            SketchControlsScript.m_Instance.ForceShowUIReticle(false);
+            base.EnableTool(bEnable);
+            if (!bEnable) ResetStroke();
+            m_WasTriggerHeld = false;
         }
 
-        // What to do when the tool is hidden / shown.
-        public override void HideTool(bool isHidden)
+        /// Resets all per-stroke state to initial values.
+        private void ResetStroke()
         {
-            base.HideTool(isHidden);
-
-            // Show the direction indicator while the tool is visible.
-            m_ToolDirectionIndicator.SetActive(!isHidden);
+            m_ControlPoints.Clear();
+            m_SplineArcLength = 0f;
+            m_StrokeStarted = false;
+            RefreshDebugRenderer();
         }
 
-        // What to do when all the tools run their update functions.
-        // Note that this is separate from Unity's Update script.
-        // All input handling should be done here.
+        /// @brief Processes trigger input and forwards the per-frame update.
+        /// Resets the stroke on trigger-down and trigger-up.
         public override void UpdateTool()
         {
+            bool triggerHeld = InputManager.Brush.GetCommand(InputManager.SketchCommands.Activate);
+            bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
+            bool triggerUp = m_WasTriggerHeld && !triggerHeld;
+
+            if (triggerDown || triggerUp)
+                ResetStroke();
+
             base.UpdateTool();
 
-            Transform attachPoint = InputManager.m_Instance.GetBrushControllerAttachPoint();
-            PointerManager.m_Instance.SetMainPointerPosition(attachPoint.position);
-
-            // Keep the tool angle correct.
-            m_ToolDirectionIndicator.transform.localRotation =
-                Quaternion.Euler(PointerManager.m_Instance.FreePaintPointerAngle, 0f, 0f);
+            m_WasTriggerHeld = triggerHeld;
         }
 
-        // The actual Unity update function, used to update transforms and perform per-frame operations.
-        private void Update()
+        /// @brief Builds the Catmull-Rom base spline from the raw pointer path and displaces
+        /// each position by the offset returned from ComputeStyleOffset.
+        /// @returns Style-displaced position with unchanged rotation.
+        protected override (Vector3, Quaternion) GetPointerPosition()
         {
-            // If we're not locking to a controller, update our transforms now, instead of in LateUpdate.
-            if (!m_IsLockedToController)
+            (Vector3 pos, Quaternion rot) = base.GetPointerPosition();
+
+            if (!m_brushTrigger)
+                return (pos, rot);
+
+            if (!m_StrokeStarted)
             {
-                UpdateTransformsFromControllers();
+                m_ControlPoints.Clear();
+                m_SplineArcLength = 0f;
+                m_LastPos = pos;
+                m_StrokeStarted = true;
             }
+
+            // Commit a new control point once the pointer has moved far enough.
+            if (m_ControlPoints.Count == 0 ||
+                Vector3.Distance(m_ControlPoints[m_ControlPoints.Count - 1], pos) >= k_MinPointSpacing)
+            {
+                m_ControlPoints.Add(pos);
+                RefreshDebugRenderer();
+            }
+
+            m_SplineArcLength += Vector3.Distance(m_LastPos, pos);
+            m_LastPos = pos;
+
+            Vector3 tangent = SplineTangentAtTip(pos, rot);
+            Vector3 offset = ComputeStyleOffset(m_SplineArcLength, tangent, rot);
+
+            return (pos + offset, rot);
         }
 
-        public override void LateUpdateTool()
+        /// @brief Represents the style curve — currently a sine wave placeholder for Markov synthesis.
+        /// Returns the style offset for the current position along the base spline.
+        /// Replace this method with DCMM transition sampling once the model is trained.
+        /// @param arcLength Accumulated arc length along the base spline.
+        /// @param tangent Normalised tangent of the base spline at the current position.
+        /// @param rot Controller rotation used as a fallback for the offset axis.
+        /// @returns Offset vector to add to the raw base spline position.
+        private Vector3 ComputeStyleOffset(float arcLength, Vector3 tangent, Quaternion rot)
         {
-            base.LateUpdateTool();
-            UpdateTransformsFromControllers();
+            Vector3 up = Quaternion.AngleAxis(m_SineAxisAngle, tangent) * (rot * Vector3.up);
+            Vector3 offsetAxis = Vector3.Cross(tangent, up).normalized;
+            if (offsetAxis.sqrMagnitude < 1e-6f)
+                offsetAxis = rot * Vector3.right;
+
+            float sine = Mathf.Sin(arcLength * m_SineFrequency * 2f * Mathf.PI);
+            return offsetAxis * (sine * m_SineAmplitude);
         }
 
-        private void UpdateTransformsFromControllers()
+        /// @brief Computes a smooth tangent at the current stroke tip using the last committed
+        /// control point and the raw pointer position as a lookahead handle.
+        /// @param pos Current raw pointer position.
+        /// @param rot Controller rotation used as a fallback direction.
+        /// @returns Normalised tangent at the current stroke tip.
+        private Vector3 SplineTangentAtTip(Vector3 pos, Quaternion rot)
         {
-            // Lock tool to camera controller.
-            if (m_IsLockedToController)
-            {
-                transform.position = m_BrushController.position;
-                transform.rotation = m_BrushController.rotation;
-            }
-            else
-            {
-                transform.position = SketchSurfacePanel.m_Instance.transform.position;
-                transform.rotation = SketchSurfacePanel.m_Instance.transform.rotation;
-            }
+            int n = m_ControlPoints.Count;
+            if (n < 2) return rot * Vector3.forward;
+
+            Vector3 diff = pos - m_ControlPoints[n - 2];
+            return diff.sqrMagnitude > 1e-6f ? diff.normalized : rot * Vector3.forward;
         }
+
+        /// @brief Evaluates a point on a Catmull-Rom spline segment.
+        /// @param p0 Control point before the segment start.
+        /// @param p1 Segment start.
+        /// @param p2 Segment end.
+        /// @param p3 Control point after the segment end.
+        /// @param t Interpolation parameter in [0, 1].
+        /// @returns Interpolated position on the spline segment.
+        private static Vector3 CatmullRomPoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        {
+            float t2 = t * t, t3 = t2 * t;
+            return 0.5f * (
+                2f * p1 +
+                (-p0 + p2) * t +
+                (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
+                (-p0 + 3f * p1 - 3f * p2 + p3) * t3
+            );
+        }
+
+        // Rebuilds the debug line renderer from all committed Catmull-Rom control points.
+        private void RefreshDebugRenderer()
+        {
+            if (m_SplineDebugRenderer == null) return;
+            m_SplineDebugRenderer.enabled = m_ShowSpline;
+
+            if (!m_ShowSpline || m_ControlPoints.Count < 4)
+            {
+                m_SplineDebugRenderer.positionCount = 0;
+                return;
+            }
+
+            var pts = new List<Vector3>();
+            for (int i = 0; i <= m_ControlPoints.Count - 4; i++)
+            {
+                for (int s = 0; s < k_DebugSamplesPerSegment; s++)
+                {
+                    float t = s / (float)k_DebugSamplesPerSegment;
+                    pts.Add(CatmullRomPoint(
+                        m_ControlPoints[i],
+                        m_ControlPoints[i + 1],
+                        m_ControlPoints[i + 2],
+                        m_ControlPoints[i + 3],
+                        t));
+                }
+            }
+
+            m_SplineDebugRenderer.positionCount = pts.Count;
+            m_SplineDebugRenderer.SetPositions(pts.ToArray());
+        }
+
+        /// Read-only view of the committed Catmull-Rom control points for the current stroke.
+        public IReadOnlyList<Vector3> SplineControlPoints => m_ControlPoints;
     }
 }
