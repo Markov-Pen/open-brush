@@ -1,7 +1,7 @@
 ---
 name: Auto Format C# Files
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       # - dev  # Reagiert auf den dev-Branch selbst
