@@ -27,9 +27,9 @@ jobs:
 
       # 2. .NET SDK einrichten
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5.2.0
         with:
-          dotnet-version: '8.0'  # Passe dies an deine genutzte .NET-Version an
+          dotnet-version: '8.0.x'  # Passe dies an deine genutzte .NET-Version an
 
       # 3. Code formatieren
       - name: Run dotnet format
