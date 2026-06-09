@@ -23,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
 
       # 2. .NET SDK einrichten
       - name: Setup .NET
