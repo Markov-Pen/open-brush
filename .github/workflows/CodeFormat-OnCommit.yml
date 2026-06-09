@@ -1,0 +1,41 @@
+name: Auto Format C# Files
+
+on:
+  push:
+    branches:
+      #- dev          # Reagiert auf den dev-Branch selbst
+      - '**MMPFO-100*'  # Reagiert auf deinen Testbranch 
+    paths:
+      - '**/*.cs'    # Wird nur getriggert, wenn sich tatsächlich C#-Dateien ändern
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    # Berechtigungen, damit der Workflow Code zurückschreiben darf
+    permissions:
+      contents: write
+
+    steps:
+    # 1. Repository auschecken
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    # 2. .NET SDK einrichten
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0' # Passe dies an deine genutzte .NET-Version an
+
+    # 3. Code formatieren (sucht automatisch nach deiner .editorconfig im Repo)
+    - name: Run dotnet format
+      run: dotnet format whitespace --include-generated || dotnet format
+
+    # 4. Änderungen committen und pushen, falls Formatierungen vorgenommen wurden
+    - name: Commit and Push changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "style: auto format C# files [skip ci]"
+        file_pattern: '*.cs'
