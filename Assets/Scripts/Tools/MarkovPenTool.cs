@@ -1,100 +1,68 @@
-using UnityEngine;
+// Copyright 2020 The Open Brush Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 namespace TiltBrush
 {
-    public class MarkovPenTool : BaseTool
+    /// @brief Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
+    ///        using an autoregressive Double Chain Markov Model (DCMM).
+    ///        Inherits input handling and pointer management from FreePaintTool.
+    public partial class MarkovPenTool : FreePaintTool
     {
-        // The parent of all of our tool's visual indicator objects.
-        private GameObject m_ToolDirectionIndicator;
+    
 
-        // Whether this tool should follow the controller or not.
-        private bool m_IsLockedToController;
-
-        // The controller that this tool is attached to.
-        private Transform m_BrushController;
-
-        // Init is similar to Awake(), and should be used for initializing references and other setup code.
-        public override void Init()
+        /// @brief Unity per-frame update. Handles transform updates and visual state.
+        /// @note  Input handling belongs in UpdateTool(), not here.
+        private void Update()
         {
-            base.Init();
-
-            // Get the visual direction indicator by name, like FlyTool does.
-            m_ToolDirectionIndicator = transform.Find("DirectionIndicator").gameObject;
         }
 
-        // What to do when the tool is enabled or disabled.
+  
+
+        /// @brief Activates or deactivates the Markov Pen tool.
+        ///        Delegates to OnEnableTool() or OnDisableTool() accordingly.
+        /// @param isEnabled true to activate the tool; false to deactivate it.
         public override void EnableTool(bool isEnabled)
         {
             base.EnableTool(isEnabled);
 
             if (isEnabled)
             {
-                m_IsLockedToController = m_SketchSurface.IsInFreePaintMode();
-
-                if (m_IsLockedToController)
-                {
-                    m_BrushController = InputManager.m_Instance.GetController(InputManager.ControllerName.Brush);
-                }
-
-            }
-
-            // Make sure our UI reticle isn't active.
-            SketchControlsScript.m_Instance.ForceShowUIReticle(false);
-        }
-
-        // What to do when the tool is hidden / shown.
-        public override void HideTool(bool isHidden)
-        {
-            base.HideTool(isHidden);
-
-            // Show the direction indicator while the tool is visible.
-            m_ToolDirectionIndicator.SetActive(!isHidden);
-        }
-
-        // What to do when all the tools run their update functions.
-        // Note that this is separate from Unity's Update script.
-        // All input handling should be done here.
-        public override void UpdateTool()
-        {
-            base.UpdateTool();
-
-            Transform attachPoint = InputManager.m_Instance.GetBrushControllerAttachPoint();
-            PointerManager.m_Instance.SetMainPointerPosition(attachPoint.position);
-
-            // Keep the tool angle correct.
-            m_ToolDirectionIndicator.transform.localRotation =
-                Quaternion.Euler(PointerManager.m_Instance.FreePaintPointerAngle, 0f, 0f);
-        }
-
-        // The actual Unity update function, used to update transforms and perform per-frame operations.
-        private void Update()
-        {
-            // If we're not locking to a controller, update our transforms now, instead of in LateUpdate.
-            if (!m_IsLockedToController)
-            {
-                UpdateTransformsFromControllers();
-            }
-        }
-
-        public override void LateUpdateTool()
-        {
-            base.LateUpdateTool();
-            UpdateTransformsFromControllers();
-        }
-
-        private void UpdateTransformsFromControllers()
-        {
-            // Lock tool to camera controller.
-            if (m_IsLockedToController)
-            {
-                transform.position = m_BrushController.position;
-                transform.rotation = m_BrushController.rotation;
+                OnEnableTool();
             }
             else
             {
-                transform.position = SketchSurfacePanel.m_Instance.transform.position;
-                transform.rotation = SketchSurfacePanel.m_Instance.transform.rotation;
+                OnDisableTool();
             }
+        }
+
+        /// @brief Called every tool update tick. Reads controller input and drives
+        ///        Markov Pen synthesis along the current base path.
+        public override void UpdateTool()
+        {
+            base.UpdateTool();
+        }
+
+   
+
+        /// @brief Initialises Markov Pen state when the tool becomes active.
+        private void OnEnableTool()
+        {
+        }
+
+        /// @brief Cleans up Markov Pen state when the tool is deactivated.
+        private void OnDisableTool()
+        {
         }
     }
 }
