@@ -22,12 +22,13 @@ namespace TiltBrush
 {
     public partial class MarkovPen
     {
+        
         /// @class BaseCurve
         /// @brief Represents the base curve of the MarkovPen.
         ///
         /// The BaseCurve class extends the functionality of the Curve class and provides
         /// additional features such as projection, spline functionalities, and smoothing functionalities.
-        public class BaseCurve : Curve
+        public class BasePath : Curve
         {
             private float m_Tap = 0f;
 
@@ -36,8 +37,16 @@ namespace TiltBrush
             private List<Vector3> m_SmoothNormals = new List<Vector3>();
 
 
-            public BaseCurve() : base(0.25f)
+            public BasePath() : base(0.25f)
             {
+            }
+
+            /// @brief Construct Base Curve 
+            ///
+            /// @params List<Vector3> controlPoints - control points forming basepath
+            public BasePath(List<Vector3> controlPoints): base(controlPoints)
+            {
+                
             }
 
             /// @brief Set the tap value for smoothing. A non-zero tap initiates the smoothing

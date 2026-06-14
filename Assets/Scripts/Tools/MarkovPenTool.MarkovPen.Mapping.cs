@@ -27,7 +27,7 @@ namespace TiltBrush
         public class Mapping
         {
             //Curves
-            public BaseCurve BaseCurve { get; private set; }
+            public BasePath BaseCurve { get; private set; }
 
             private Curve m_StyleCurve;
 
@@ -50,7 +50,7 @@ namespace TiltBrush
             /// @param styleCurve The style curve for the mapping.
             /// @param baseCurve The base curve for the mapping.
             /// @exception NullReferenceException Thrown if styleCurve or baseCurve is null.
-            public Mapping(Curve styleCurve, BaseCurve baseCurve)
+            public Mapping(BasePath baseCurve, Curve styleCurve)
             {
                 Debug.Log("ENter");
 

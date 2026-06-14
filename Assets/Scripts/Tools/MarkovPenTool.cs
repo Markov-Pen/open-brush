@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TiltBrush
@@ -23,10 +25,16 @@ namespace TiltBrush
     /// 
     public class MarkovPenTool : FreePaintTool
     {
+        private MarkovPen m_MarkovPen;
         /// @brief Initialise the tool and all Markov model data structures.
         public override void Init()
         {
             base.Init();
+            List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            
+            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.25f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.25f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);
+            Debug.Log("Init yay");
         }
 
         /// @brief Activate or deactivate the Markov Pen tool
@@ -35,6 +43,7 @@ namespace TiltBrush
         public override void EnableTool(bool isEnabled)
         {
             base.EnableTool(isEnabled);
+            Debug.Log("Tool Enabled");
         }
 
         /// @brief Show or hide the tool's visual indicators
@@ -43,6 +52,7 @@ namespace TiltBrush
         public override void HideTool(bool isHidden)
         {
             base.HideTool(isHidden);
+            Debug.Log("Tool Hidden");
         }
 
         /// @brief Read controller input and drive synthesis
@@ -54,6 +64,7 @@ namespace TiltBrush
         public override void UpdateTool()
         {
             base.UpdateTool();
+            Debug.Log("Update");
         }
 
         /// @brief Updates pointer transforms
@@ -63,12 +74,14 @@ namespace TiltBrush
         public override void LateUpdateTool()
         {
             base.LateUpdateTool();
+            Debug.Log("LateUpdate");
         }
 
         /// @brief Return the world-space position and rotation for the brush pointer
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
+            Debug.Log("GetPointer");
             return base.GetPointerPosition();
         }
 
@@ -87,6 +100,8 @@ namespace TiltBrush
             base.UpdateSize(adjustAmount);
         }
 
+        
+
         /// @brief Return the current brush size as a normalised [0, 1] value
         /// @returns Brush size in the [0, 1] range.
         public override float GetSize01()
@@ -99,6 +114,16 @@ namespace TiltBrush
         public override bool CanAdjustSize()
         {
             return base.CanAdjustSize();
+        }
+
+        /// @brief Create a new Markov pen
+        /// 
+        /// @param basePath - Control Points of the given example Base Path
+        /// @param styleCurve - Control points of the given example Style Curve
+
+        public void CreateMarkovPen(List<Vector3> basePath, List<Vector3> styleCurve)
+        {
+            m_MarkovPen = new MarkovPen(basePath, styleCurve);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace TiltBrush
     /// @brief The Markov Pen is a technique for generating character styles.
     ///
     /// This class serves as the base for other partial classes and derives from MarkovPenTool.
-    public partial class MarkovPen : MarkovPenTool
+    public partial class MarkovPen 
     {
         private Mapping m_ExampleMapping;
         private Mapping m_TargetMapping;
@@ -31,8 +31,20 @@ namespace TiltBrush
         private Curve m_ExampleStyleCurve;
         private Curve m_TargetStyleCurve;
 
-        private BaseCurve m_ExampleBaseCurve;
-        private BaseCurve m_TargetBaseCurve;
+        private BasePath m_ExampleBaseCurve;
+        private BasePath m_TargetBaseCurve;
+
+        /// @brief Constuct a MarkovPen instance
+        /// 
+        /// @param basePathControlPoints - Control Points of the Base Path
+        /// @param styleCurveControlPoints - Control points of the Style Curve 
+        public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
+        {
+            BasePath basePath = new BasePath(basePathControlPoints);
+            Curve styleCurve = new Curve(styleCurveControlPoints);
+
+            m_ExampleMapping = new Mapping(basePath, styleCurve);
+        }
 
         /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
         /// @param exampleMapping A Mapping computed from the example curves.

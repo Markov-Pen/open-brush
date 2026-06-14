@@ -47,6 +47,16 @@ namespace TiltBrush
                 m_Responsiveness = responsiveness;
                 m_ArcLengthPositions = new List<float> { 0f };
             }
+            
+            /// @brief Construct Curve 
+            /// 
+            /// 
+            /// @params styleCurveControlPoints - Constrol points of the curve
+            public Curve(List<Vector3> styleCurveControlPoints): this()
+            {
+                m_ControlPoints = styleCurveControlPoints;
+                ComputeArcLenghtsPositions();
+            }
 
             /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
             /// If the curve is empty, the control point is directly added. If it's the first control point,
@@ -368,7 +378,7 @@ namespace TiltBrush
             /// @return True if the curve is finished, otherwise false.
             public bool IsFinished()
             {
-                if (this is BaseCurve)
+                if (this is BasePath)
                 {
                     Debug.Log(
                         "BaseCurve is finished" +
@@ -385,6 +395,24 @@ namespace TiltBrush
 
                 return m_ControlPoints.Count >= 2 &&
                        m_ArcLengthPositions.Count == m_ControlPoints.Count;
+            }
+
+            /// @brief Compute all arclength positions of the curve
+            public void ComputeArcLenghtsPositions()
+            {
+                if (m_ControlPoints.Count < 2)
+                {
+                    return;
+                }
+
+                m_ArcLengthPositions.Add(0);
+                for (int i = 0; i < m_ControlPoints.Count; i++)
+                {
+                   m_ArcLengthPositions.Add(
+                    m_ArcLengthPositions.Last() +
+                    ComputeArcLength(i));             
+                }
+               
             }
         }
     }
