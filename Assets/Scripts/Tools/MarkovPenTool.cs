@@ -41,7 +41,7 @@ namespace TiltBrush
         {
             base.EnableTool(isEnabled);
             //Debug.Log("Tool Enabled");
-            List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(0.25f, 0.0f, 0.0f), new(0.5f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
             
             List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.25f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.25f, 0.0f), new(1.0f, 0.0f, 0.0f)};
             CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);

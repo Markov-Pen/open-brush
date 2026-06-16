@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
@@ -44,9 +45,18 @@ namespace TiltBrush
             /// @brief Construct Base Curve 
             ///
             /// @params List<Vector3> controlPoints - control points forming basepath
-            public BasePath(List<Vector3> controlPoints): base(controlPoints)
+            public BasePath(List<Vector3> controlPoints)
             {
-                
+                Vector3 upVector = controlPoints.Last() - controlPoints.First();
+                float x = upVector.x;
+                float y = upVector.y;
+                upVector = new Vector3(y, -x, 0.0f);
+                foreach (var point in controlPoints)
+                {
+                    AddControlPoint(point, upVector);
+
+                }
+                Finish();
             }
 
             /// @brief Set the tap value for smoothing. A non-zero tap initiates the smoothing
@@ -60,9 +70,9 @@ namespace TiltBrush
             /// Extends the base class method to incorporate smoothing functionalities based on the tap value.
             /// @param controlPoint The control point to be added to the base curve.
             /// @param upVector The up vector associated with the control point.
-            public override void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
+            public void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
             {
-                base.AddControlPoint(controlPoint, upVector);
+                base.AddControlPoint(controlPoint);
 
                 if (Tap == 0)
                 {

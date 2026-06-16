@@ -53,8 +53,11 @@ namespace TiltBrush
             /// @params styleCurveControlPoints - Constrol points of the curve
             public Curve(List<Vector3> styleCurveControlPoints): this()
             {
-                m_ControlPoints = styleCurveControlPoints;
-                ComputeArcLenghtsPositions();
+                foreach (var point in styleCurveControlPoints)
+                {
+                    AddControlPoint(point);
+                }
+                Finish();
             }
 
             /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
@@ -63,8 +66,7 @@ namespace TiltBrush
             /// cubic Hermite interpolation (elasticurve implementation) to add a new point to the curve.
             /// The method also updates arc length information when the curve has at least three control points.
             /// @param controlPoint The new control point to be added.
-            /// @param upVector The up vector associated with the control point.
-            public virtual void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
+            public void AddControlPoint(Vector3 controlPoint)
             {
                 if (m_ControlPoints.Count == 0)
                 {
@@ -380,24 +382,7 @@ namespace TiltBrush
                 return m_ControlPoints.Count >= 2 &&
                        m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
-
-            /// @brief Compute all arclength positions of the curve
-            public void ComputeArcLenghtsPositions()
-            {
-                if (m_ControlPoints.Count < 2)
-                {
-                    return;
-                }
-
-                m_ArcLengthPositions.Add(0);
-                for (int i = 0; i < m_ControlPoints.Count; i++)
-                {
-                   m_ArcLengthPositions.Add(
-                    m_ArcLengthPositions.Last() +
-                    ComputeArcLength(i));             
-                }
-               
-            }
+           
         }
     }
 }
