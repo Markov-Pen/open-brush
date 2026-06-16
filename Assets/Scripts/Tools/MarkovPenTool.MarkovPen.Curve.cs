@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace TiltBrush
 {
@@ -378,21 +377,6 @@ namespace TiltBrush
             /// @return True if the curve is finished, otherwise false.
             public bool IsFinished()
             {
-                if (this is BasePath)
-                {
-                    Debug.Log(
-                        "BaseCurve is finished" +
-                        (m_ControlPoints.Count >= 2 &&
-                         m_ArcLengthPositions.Count == m_ControlPoints.Count));
-                }
-
-                Debug.Log(
-                    "Curve is finished" +
-                    (m_ControlPoints.Count >= 2 &&
-                     m_ArcLengthPositions.Count == m_ControlPoints.Count) +
-                    "Differenz: " +
-                    (m_ArcLengthPositions.Count - m_ControlPoints.Count));
-
                 return m_ControlPoints.Count >= 2 &&
                        m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }

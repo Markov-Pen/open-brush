@@ -52,8 +52,7 @@ namespace TiltBrush
             /// @exception NullReferenceException Thrown if styleCurve or baseCurve is null.
             public Mapping(BasePath baseCurve, Curve styleCurve)
             {
-                Debug.Log("ENter");
-
+                Debug.Log("compute Mapping");
                 LastIndex = -1;
 
                 if (styleCurve == null)
@@ -66,8 +65,6 @@ namespace TiltBrush
                     throw new NullReferenceException("BaseCurve must not be null");
                 }
 
-                Debug.Log("ENter2");
-
                 BaseCurve = baseCurve;
                 m_StyleCurve = styleCurve;
 
@@ -76,11 +73,9 @@ namespace TiltBrush
                     return;
                 }
 
-                Debug.Log("ENter3");
-
                 //compute sampling interval
                 float samplingInterval = ComputeSamplingInterval();
-
+                Debug.Log("Sampling interval on style curve: " + samplingInterval);
                 //sample style curve
                 List<Vector3> samples = SampleStyleCurveUniformly(samplingInterval);
 
@@ -92,9 +87,11 @@ namespace TiltBrush
 
                 //compute maximum offset
                 ComputeMaxOffset();
-
+                Debug.Log("Filter tap for normal smoothing: " + baseCurve.Tap);
+                
                 //compute offsets
                 ComputeOffsets();
+                Debug.Log("Mapping size: " + m_Mapping.Count);
             }
 
             /// @brief Sample the style curve uniformly based on the given sampling interval.
@@ -165,8 +162,6 @@ namespace TiltBrush
                         offsetAlongNormal *= -1;
                     }
 
-                    // Debug.Log("association: " + new Vector2(projections[i], offset));
-
                     m_Mapping.Add(
                         new Vector2(projections[i], offsetAlongNormal));
                 }
@@ -216,7 +211,7 @@ namespace TiltBrush
             {
                 if (IsEmpty()) ;
 
-                BaseCurve.SetTap(offset);
+                BaseCurve.Tap = offset;
 
                 //_maxOffset = offset;
             }

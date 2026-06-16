@@ -41,7 +41,9 @@ namespace TiltBrush
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
+            Debug.Log("Arclength of example base path: " + basePath.ArcLength());
             Curve styleCurve = new Curve(styleCurveControlPoints);
+            Debug.Log("Arclength of example style curve: " + styleCurve.ArcLength());
 
             m_ExampleMapping = new Mapping(basePath, styleCurve);
         }
@@ -51,8 +53,6 @@ namespace TiltBrush
         public void Initialize(Mapping exampleMapping)
         {
             m_ExampleMapping = exampleMapping;
-
-            Debug.Log("mapping " + m_ExampleMapping.IsEmpty());
 
             m_Synthesizer = new Synthesizer(m_ExampleMapping);
         }

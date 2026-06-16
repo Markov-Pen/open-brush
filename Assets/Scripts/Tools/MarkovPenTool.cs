@@ -30,11 +30,8 @@ namespace TiltBrush
         public override void Init()
         {
             base.Init();
-            List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
             
-            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.25f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.25f, 0.0f), new(1.0f, 0.0f, 0.0f)};
-            CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);
-            Debug.Log("Init yay");
+            //Debug.Log("Init yay");
         }
 
         /// @brief Activate or deactivate the Markov Pen tool
@@ -43,7 +40,11 @@ namespace TiltBrush
         public override void EnableTool(bool isEnabled)
         {
             base.EnableTool(isEnabled);
-            Debug.Log("Tool Enabled");
+            //Debug.Log("Tool Enabled");
+            List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            
+            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.25f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.25f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);
         }
 
         /// @brief Show or hide the tool's visual indicators
@@ -52,7 +53,7 @@ namespace TiltBrush
         public override void HideTool(bool isHidden)
         {
             base.HideTool(isHidden);
-            Debug.Log("Tool Hidden");
+            //Debug.Log("Tool Hidden");
         }
 
         /// @brief Read controller input and drive synthesis
@@ -64,24 +65,24 @@ namespace TiltBrush
         public override void UpdateTool()
         {
             base.UpdateTool();
-            Debug.Log("Update");
+            //Debug.Log("Update");
         }
 
-        /// @brief Updates pointer transforms
+        /// @brief Update pointer transforms
         /// 
         /// Called only on frames that UpdateTool() has been called.
         /// Guaranteed to be called after new poses have been received from OpenVR.
         public override void LateUpdateTool()
         {
             base.LateUpdateTool();
-            Debug.Log("LateUpdate");
+           // Debug.Log("LateUpdate");
         }
 
         /// @brief Return the world-space position and rotation for the brush pointer
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
-            Debug.Log("GetPointer");
+            //Debug.Log("GetPointer");
             return base.GetPointerPosition();
         }
 
