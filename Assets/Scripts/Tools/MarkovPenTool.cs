@@ -14,7 +14,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace TiltBrush
 {
@@ -26,10 +28,17 @@ namespace TiltBrush
     public class MarkovPenTool : FreePaintTool
     {
         private MarkovPen m_MarkovPen;
+
+        private MarkovPen.Mapping m_TargetMapping;
+
+        List<Tuple<Vector3, Quaternion>> m_Pointers = new();
+
+
         /// @brief Initialise the tool and all Markov model data structures.
         public override void Init()
         {
             base.Init();
+
             
             //Debug.Log("Init yay");
         }
@@ -64,7 +73,14 @@ namespace TiltBrush
         ///        point on B', and feed the result into the pointer manager.
         public override void UpdateTool()
         {
+            if (m_Pointers.Count == 0)
+            {
+                var p = base.GetPointerPosition();
+                m_Pointers.Add(Tuple.Create(p.Item1, p.Item2));
+            }
             base.UpdateTool();
+            m_Pointers.AddRange(m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+
             //Debug.Log("Update");
         }
 
@@ -83,7 +99,7 @@ namespace TiltBrush
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
             //Debug.Log("GetPointer");
-            return base.GetPointerPosition();
+            return (m_Pointers.Last().Item1, m_Pointers.Last().Item2);
         }
 
         /// @brief Set the visual materials on the controller geometry to reflect tool state

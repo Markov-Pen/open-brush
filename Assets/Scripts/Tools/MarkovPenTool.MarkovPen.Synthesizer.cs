@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Vector3 = System.Numerics.Vector3;
@@ -46,7 +45,7 @@ namespace TiltBrush
             /// Iteratively applies offsets to the target mapping, generating associations and inflating points.
             /// @param targetMapping The target mapping to be reconstructed.
             /// @return A list of associations representing the reconstructed relationship between curves.
-            public List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>> Reconstruct(Mapping targetMapping)
+            public List<Tuple<UnityEngine.Vector3, Quaternion>> Reconstruct(Mapping targetMapping)
             {
                 float offset = m_ExampleMapping.MaxOffset;
 
@@ -59,8 +58,8 @@ namespace TiltBrush
                     (targetMapping.LastIndex + 1) %
                     m_ExampleMapping.GetMapping.Count;
 
-                List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>> associations =
-                    new List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>>();
+                List<Tuple<UnityEngine.Vector3, Quaternion>> pointers =
+                    new List<Tuple<UnityEngine.Vector3, Quaternion>>();
 
                 while (true)
                 {
@@ -71,16 +70,17 @@ namespace TiltBrush
                         break;
                     }
 
-                    associations.Add(
-                        targetMapping.Inflate(
-                            targetMapping.GetAssociation(
-                                targetMapping.GetMapping.Count - 1)));
+                    Vector2 association = targetMapping.GetAssociation(
+                                targetMapping.GetMapping.Count - 1);
+                    Tuple<UnityEngine.Vector3, UnityEngine.Vector3> endPoints = targetMapping.Inflate(association);
+                    pointers.Add(Tuple.Create(endPoints.Item1, new Quaternion()));
+                    Debug.Log("MarkovPen: Synthesize Pointers: " + pointers.Count);
 
                     // Increment the index in a circular manner to iterate through the example mapping
                     index = (index + 1) % m_ExampleMapping.GetMapping.Count;
                 }
 
-                return associations;
+                return pointers;
             }
 
             /// @brief Checks if the Synthesizer is trained with an example mapping.

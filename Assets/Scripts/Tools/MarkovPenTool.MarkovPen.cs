@@ -25,7 +25,7 @@ namespace TiltBrush
     public partial class MarkovPen 
     {
         private Mapping m_ExampleMapping;
-        private Mapping m_TargetMapping;
+        private Mapping m_TargetMapping = new Mapping();
         private Synthesizer m_Synthesizer;
 
         private Curve m_ExampleStyleCurve;
@@ -41,11 +41,12 @@ namespace TiltBrush
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
-            Debug.Log("Arclength of example base path: " + basePath.ArcLength());
+            Debug.Log("MarkovPen: Arclength of example base path: " + basePath.ArcLength());
             Curve styleCurve = new Curve(styleCurveControlPoints);
-            Debug.Log("Arclength of example style curve: " + styleCurve.ArcLength());
+            Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
 
             m_ExampleMapping = new Mapping(basePath, styleCurve);
+            m_Synthesizer = new Synthesizer(m_ExampleMapping);
         }
 
         /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
@@ -60,11 +61,14 @@ namespace TiltBrush
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
         /// @param targetMapping A Mapping representing the growing target base curve and an empty target style curve.
         /// @return A list of reconstructed point pairs on the target curve.
-        public List<Tuple<Vector3, Vector3>> Reconstruct(Mapping targetMapping)
+        public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
-            List<Tuple<Vector3, Vector3>> result =
-                m_Synthesizer.Reconstruct(targetMapping);
-
+            Debug.Log("MarkovPen: UpVector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
+            m_TargetMapping.BaseCurve.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
+        
+            List<Tuple<Vector3, Quaternion>> result =
+                m_Synthesizer.Reconstruct(m_TargetMapping);
+            Debug.Log("MarkovPen: Result: " + result);
             return result;
         }
 

@@ -52,7 +52,7 @@ namespace TiltBrush
             /// @exception NullReferenceException Thrown if styleCurve or baseCurve is null.
             public Mapping(BasePath baseCurve, Curve styleCurve)
             {
-                Debug.Log("compute Mapping");
+                Debug.Log("MarkovPen: compute Mapping");
                 LastIndex = -1;
 
                 if (styleCurve == null)
@@ -75,7 +75,7 @@ namespace TiltBrush
 
                 //compute sampling interval
                 float samplingInterval = ComputeSamplingInterval();
-                Debug.Log("Sampling interval on style curve: " + samplingInterval);
+                Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
                 //sample style curve
                 List<Vector3> samples = SampleStyleCurveUniformly(samplingInterval);
 
@@ -87,11 +87,18 @@ namespace TiltBrush
 
                 //compute maximum offset
                 ComputeMaxOffset();
-                Debug.Log("Filter tap for normal smoothing: " + baseCurve.Tap);
+                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + baseCurve.Tap);
                 
                 //compute offsets
                 ComputeOffsets();
-                Debug.Log("Mapping size: " + m_Mapping.Count);
+                Debug.Log("MarkovPen: Mapping size: " + m_Mapping.Count);
+            }
+
+            public Mapping()
+            {
+                BaseCurve = new BasePath();
+                m_StyleCurve = new Curve();
+
             }
 
             /// @brief Sample the style curve uniformly based on the given sampling interval.

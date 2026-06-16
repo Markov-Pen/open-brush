@@ -45,7 +45,7 @@ namespace TiltBrush
             /// @brief Construct Base Curve 
             ///
             /// @params List<Vector3> controlPoints - control points forming basepath
-            public BasePath(List<Vector3> controlPoints)
+            public BasePath(List<Vector3> controlPoints) : base(0.25f)
             {
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
                 float x = upVector.x;
