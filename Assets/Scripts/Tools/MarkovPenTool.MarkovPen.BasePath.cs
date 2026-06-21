@@ -37,6 +37,11 @@ namespace TiltBrush
 
             private List<Vector3> m_SmoothNormals = new List<Vector3>();
 
+            // Last normal returned by SmoothNormalAt, used to keep the sign continuous between
+            // consecutive synthesis queries so the styled offset never flips to the other side of
+            // the curve (which shows up as ~2x-offset jumps in the stroke). Zero = uninitialized.
+            private Vector3 m_LastSmoothNormal = Vector3.zero;
+
 
             public BasePath() : base(0.25f)
             {
@@ -209,11 +214,11 @@ namespace TiltBrush
 
                 if (l <= 0)
                 {
-                    return m_SmoothNormals[0];
+                    normal = m_SmoothNormals[0];
                 }
                 else if (l >= m_ArcLengthPositions.Last())
                 {
-                    return m_SmoothNormals.Last();
+                    normal = m_SmoothNormals.Last();
                 }
                 else
                 {
@@ -255,7 +260,20 @@ namespace TiltBrush
                     }
                 }
 
-                return normal.normalized;
+                normal = normal.normalized;
+
+                // Keep the normal on a consistent side between consecutive queries. The interpolated
+                // normal can flip sign as the curve grows; since the example offsets sit on one side,
+                // a flip throws the styled point across the curve (~2x-offset jump). Match the sign of
+                // the previous normal to stay smooth.
+                if (m_LastSmoothNormal != Vector3.zero &&
+                    Vector3.Dot(normal, m_LastSmoothNormal) < 0f)
+                {
+                    normal = -normal;
+                }
+                m_LastSmoothNormal = normal;
+
+                return normal;
             }
 
             /// @brief Compute the total arc length of the curve.

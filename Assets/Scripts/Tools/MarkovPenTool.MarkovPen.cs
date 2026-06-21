@@ -72,6 +72,14 @@ namespace TiltBrush
             return result;
         }
 
+        /// @brief Discard the current target curve so the next stroke starts fresh.
+        ///
+        /// Called on trigger-down to reset the growing target base/style curve between strokes.
+        public void ResetTarget()
+        {
+            m_TargetMapping = new Mapping();
+        }
+
         /// @brief Checks whether the MarkovPen is trained (example mapping present).
         /// @return True if the MarkovPen is trained; otherwise false.
         public bool IsTrained()

@@ -31,7 +31,8 @@ namespace TiltBrush
 
         private MarkovPen.Mapping m_TargetMapping;
 
-        List<Tuple<Vector3, Quaternion>> m_Pointers = new();
+        private Tuple<Vector3, Quaternion> m_CurrentPoint;
+        private readonly Queue<Tuple<Vector3, Quaternion>> m_Overflow = new();
 
 
         /// @brief Initialise the tool and all Markov model data structures.
@@ -73,13 +74,57 @@ namespace TiltBrush
         ///        point on B', and feed the result into the pointer manager.
         public override void UpdateTool()
         {
-            if (m_Pointers.Count == 0)
+            bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
+
+            if (triggerDown || m_CurrentPoint == null)
             {
-                var p = base.GetPointerPosition();
-                m_Pointers.Add(Tuple.Create(p.Item1, p.Item2));
+                m_MarkovPen.ResetTarget();
+                m_Overflow.Clear();
+
+                var start = base.GetPointerPosition();
+                m_CurrentPoint = Tuple.Create(start.Item1, start.Item2);
             }
             base.UpdateTool();
-            m_Pointers.AddRange(m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+
+            PointerScript pointer = PointerManager.m_Instance.MainPointer;
+
+            if (m_brushTrigger && pointer.IsCreatingStroke())
+            {
+                var toDraw = new List<Tuple<Vector3, Quaternion>>(m_Overflow);
+                m_Overflow.Clear();
+                toDraw.AddRange(m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+
+                bool advanced = false;
+                for (int i = 0; i < toDraw.Count; i++)
+                {
+                    if (pointer.ShouldCurrentLineEnd())
+                    {
+                        for (int j = i; j < toDraw.Count; j++)
+                        {
+                            m_Overflow.Enqueue(toDraw[j]);
+                        }
+                        break;
+                    }
+
+                    if (i > 0)
+                    {
+                        var prev = toDraw[i - 1];
+                        PointerManager.m_Instance.SetPointerTransform(
+                            InputManager.ControllerName.Brush, prev.Item1, prev.Item2);
+                        pointer.UpdateLineFromObject();
+                    }
+
+                    m_CurrentPoint = toDraw[i];
+                    advanced = true;
+                }
+
+                // Leave the frontier as the pointer position so the manager's sample draws it (once).
+                if (advanced)
+                {
+                    PointerManager.m_Instance.SetPointerTransform(
+                        InputManager.ControllerName.Brush, m_CurrentPoint.Item1, m_CurrentPoint.Item2);
+                }
+            }
 
             //Debug.Log("Update");
         }
@@ -99,7 +144,11 @@ namespace TiltBrush
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
             //Debug.Log("GetPointer");
-            return (m_Pointers.Last().Item1, m_Pointers.Last().Item2);
+            if (m_CurrentPoint == null)
+            {
+                return base.GetPointerPosition();
+            }
+            return (m_CurrentPoint.Item1, m_CurrentPoint.Item2);
         }
 
         /// @brief Set the visual materials on the controller geometry to reflect tool state
