@@ -50,7 +50,7 @@ namespace TiltBrush
             /// @brief Construct Base Curve 
             ///
             /// @params List<Vector3> controlPoints - control points forming basepath
-            public BasePath(List<Vector3> controlPoints) : base(0.25f)
+            public BasePath(List<Vector3> controlPoints)
             {
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
                 float x = upVector.x;
@@ -440,7 +440,7 @@ namespace TiltBrush
 
                 float middle = l1 + (l2 - l1) / 2.0f;
 
-                if (Math.Abs(d1) < 0.25 && Math.Abs(d2) < 0.25)
+                if (Math.Abs(d1) < 0.001 && Math.Abs(d2) < 0.001)
                 {
                     projections.Add(middle);
                     return;

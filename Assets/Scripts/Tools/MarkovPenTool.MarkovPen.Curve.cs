@@ -305,7 +305,7 @@ namespace TiltBrush
                 Vector3 p4,
                 float t1,
                 float t2,
-                float threshold = 0.1f)
+                float threshold = 0.001f)
             {
                 Vector3 interpolatedPoint1 =
                     Interpolate(p1, p2, p3, p4, Tension, Continuity, Bias, t1);
