@@ -263,6 +263,12 @@ namespace TiltBrush
             /// @return The total arc length of the curve.
             public override float ArcLength()
             {
+
+                if (Tap == 0)
+                {
+                    return base.ArcLength();
+                }
+                
                 if (m_UpVectors.Count < 4)
                 {
                     return 0;

@@ -97,7 +97,7 @@ namespace TiltBrush
                 {
                     m_ArcLengthPositions.Add(
                         m_ArcLengthPositions.Last() +
-                        ComputeArcLength(m_ControlPoints.Count - 2));
+                        ComputeArcLength(m_ControlPoints.Count - 3));
                 }
             }
 
@@ -365,6 +365,24 @@ namespace TiltBrush
             /// @brief Finalize the curve, updating arc length information by computing the last segment's length.
             public virtual void Finish()
             {
+                //elasticurve implementation
+                m_ControlPoints.Add(Interpolate(
+                    m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
+                    m_ControlPoints[^1],
+                    (Vector3)m_LastInput,
+                    (Vector3)m_LastInput,
+                    0,
+                    0,
+                    0,
+                    m_Responsiveness));
+
+                if (m_ControlPoints.Count >= 3)
+                {
+                    m_ArcLengthPositions.Add(
+                        m_ArcLengthPositions.Last() +
+                        ComputeArcLength(m_ControlPoints.Count - 3));
+                }
+
                 if (m_ControlPoints.Count < 2)
                 {
                     return;

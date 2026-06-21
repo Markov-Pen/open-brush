@@ -63,7 +63,7 @@ namespace TiltBrush
         /// @return A list of reconstructed point pairs on the target curve.
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
-            Debug.Log("MarkovPen: UpVector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
+            //Debug.Log("MarkovPen: UpVector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
             m_TargetMapping.BaseCurve.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
         
             List<Tuple<Vector3, Quaternion>> result =

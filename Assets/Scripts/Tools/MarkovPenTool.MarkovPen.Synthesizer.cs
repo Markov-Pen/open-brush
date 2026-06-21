@@ -74,7 +74,7 @@ namespace TiltBrush
                                 targetMapping.GetMapping.Count - 1);
                     Tuple<UnityEngine.Vector3, UnityEngine.Vector3> endPoints = targetMapping.Inflate(association);
                     pointers.Add(Tuple.Create(endPoints.Item1, new Quaternion()));
-                    Debug.Log("MarkovPen: Synthesize Pointers: " + pointers.Count);
+                    //Debug.Log("MarkovPen: Synthesize Pointers: " + pointers.Count);
 
                     // Increment the index in a circular manner to iterate through the example mapping
                     index = (index + 1) % m_ExampleMapping.GetMapping.Count;
