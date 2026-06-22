@@ -18,7 +18,7 @@ namespace TiltBrush
 {
     public class ActionButton : BaseButton
     {
-        [SerializeField] private UnityEngine.Events.UnityEvent m_Action;
+         [SerializeField] private UnityEngine.Events.UnityEvent m_Action;
 
         protected override void OnButtonPressed()
         {

@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-    public class BackdropButton : BaseButton
+     public class BackdropButton : BaseButton
     {
         [SerializeField] private ColorMode m_ColorMode;
         [SerializeField] private GameObject[] m_ObjectsToHideBehindPopups;
