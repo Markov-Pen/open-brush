@@ -31,9 +31,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'  # Passe dies an deine genutzte .NET-Version an
 
-      # 3. Code formatieren
+      # 3. Code formatieren (scannt den Ordner direkt, ohne .sln-Zwang)
       - name: Run dotnet format
-        run: dotnet format whitespace --include-generated || dotnet format
+        run: |
+          dotnet format whitespace --folder --include-generated . || dotnet format --folder .
 
       # 4. Änderungen committen und pushen
       - name: Commit and Push changes
