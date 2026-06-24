@@ -29,10 +29,8 @@ namespace TiltBrush
     {
         private MarkovPen m_MarkovPen;
 
-        private MarkovPen.Mapping m_TargetMapping;
-
-        private Tuple<Vector3, Quaternion> m_CurrentPoint;
-        private readonly Queue<Tuple<Vector3, Quaternion>> m_Overflow = new();
+        private List<Tuple<Vector3, Quaternion>> m_Pointers= new();
+        Tuple<Vector3, Quaternion> m_LastPointer= new Tuple<Vector3, Quaternion> (Vector3.zero, Quaternion.identity);
 
 
         /// @brief Initialise the tool and all Markov model data structures.
@@ -76,6 +74,28 @@ namespace TiltBrush
         {
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
+            if (triggerDown)
+            {
+                m_MarkovPen.ResetTarget();
+                m_Pointers.Clear();
+                var start = base.GetPointerPosition();
+                m_LastPointer = Tuple.Create(start.Item1, start.Item2);
+            }
+
+            List<Tuple<Vector3, Quaternion>> pointers= (m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+            
+            if(pointers.Count>0) m_Pointers= pointers;
+
+            if(!(m_Pointers.Count == 0))
+            {
+                m_LastPointer= m_Pointers.First();
+                m_Pointers.RemoveAt(0);     
+            }
+            base.UpdateTool();
+            
+
+
+/*
             if (triggerDown || m_CurrentPoint == null)
             {
                 m_MarkovPen.ResetTarget();
@@ -127,6 +147,7 @@ namespace TiltBrush
             }
 
             //Debug.Log("Update");
+            */
         }
 
         /// @brief Update pointer transforms
@@ -143,12 +164,8 @@ namespace TiltBrush
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
-            //Debug.Log("GetPointer");
-            if (m_CurrentPoint == null)
-            {
-                return base.GetPointerPosition();
-            }
-            return (m_CurrentPoint.Item1, m_CurrentPoint.Item2);
+            if(m_LastPointer.Item1.Equals(Vector3.zero)) Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            return (m_LastPointer.Item1, m_LastPointer.Item2);
         }
 
         /// @brief Set the visual materials on the controller geometry to reflect tool state
