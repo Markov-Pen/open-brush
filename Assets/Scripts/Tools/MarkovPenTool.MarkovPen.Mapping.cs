@@ -125,15 +125,13 @@ namespace TiltBrush
             public List<float> Project(List<Vector3> samples)
             {
                 List<float> projections = new List<float>();
-                Debug.Log("**************************************************");
+                
                 foreach (var sample in samples)
                 {
                     float projection = BaseCurve.Project(sample)[0];
                     projections.Add(projection);
-                    Debug.Log(projection.ToString());
 
                 }
-                Debug.Log("**************************************************");
 
                 return projections;
             }

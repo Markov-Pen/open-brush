@@ -51,7 +51,7 @@ namespace TiltBrush
             //Debug.Log("Tool Enabled");
             List<Vector3> exampleListBasePath = new List<Vector3>(){new(0.0f, 0.0f, 0.0f), new(0.25f, 0.0f, 0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f)};
             
-            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.25f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.25f, 0.0f), new(1.0f, 0.0f, 0.0f)};
+            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.125f, 0.125f,0.0f), new(0.25f, 0.25f,0.0f), new(0.375f, 0.125f,0.0f), new(0.5f, 0.0f, 0.0f), new(0.625f, 0.125f,0.0f), new(0.75f, 0.25f, 0.0f),new(0.875f, 0.125f,0.0f),new(1.0f, 0.0f, 0.0f)};
             CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);
         }
 
@@ -84,14 +84,21 @@ namespace TiltBrush
 
             List<Tuple<Vector3, Quaternion>> pointers= (m_MarkovPen.Reconstruct(base.GetPointerPosition()));
             
-            if(pointers.Count>0) m_Pointers= pointers;
-
-            if(!(m_Pointers.Count == 0))
+            if(pointers.Count>0)
             {
-                m_LastPointer= m_Pointers.First();
-                m_Pointers.RemoveAt(0);     
+                 m_Pointers= pointers;
+                 m_LastPointer= m_Pointers.First();
+                 m_Pointers.RemoveAt(0);
             }
             base.UpdateTool();
+
+            while(!(m_Pointers.Count == 0))
+            {
+                m_LastPointer= m_Pointers.First();
+                base.UpdateTool();
+                m_Pointers.RemoveAt(0);     
+            }
+            
             
 
 
@@ -164,7 +171,6 @@ namespace TiltBrush
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
-            if(m_LastPointer.Item1.Equals(Vector3.zero)) Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return (m_LastPointer.Item1, m_LastPointer.Item2);
         }
 
