@@ -52,7 +52,7 @@ namespace TiltBrush
             SnipTool = 11000,
             JoinTool = 11001,
             MarkovPenTool,
-            MarkovPenDrawingTool,
+            MarkovPenExampleTool,
         }
         public ToolType m_Type;
 

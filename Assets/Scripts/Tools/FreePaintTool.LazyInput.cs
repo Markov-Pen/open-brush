@@ -1,4 +1,4 @@
-﻿// Copyright 2021 The Tilt Brush Authors
+﻿﻿// Copyright 2021 The Tilt Brush Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,9 +56,13 @@ namespace TiltBrush
             Vector3 moveDelta = Vector3.Lerp(Vector3.zero, Vector3.Lerp(midPointDelta, beeline, midPointLerp), lerpT);
 
             TrTransform result = TrTransform.TRS(
-                startTx.translation + Vector3.Lerp(moveDelta, Vector3.zero, beelineTangentDot),
-                Quaternion.Slerp(startTx.rotation, endTx.rotation, Mathf.Lerp(midPointLerp, 1, beelineTangentDot) * lerpT),
-                Mathf.Lerp(startTx.scale, endTx.scale, lerpT)
+
+              startTx.translation + Vector3.Lerp(moveDelta, Vector3.zero, beelineTangentDot),
+
+              Quaternion.Slerp(startTx.rotation, endTx.rotation, Mathf.Lerp(midPointLerp, 1, beelineTangentDot) * lerpT),
+
+              Mathf.Lerp(startTx.scale, endTx.scale, lerpT)
+
             );
             return result;
         }
@@ -68,9 +72,13 @@ namespace TiltBrush
             Vector3 beeline = endTx.translation - startTx.translation;
 
             TrTransform result = TrTransform.TRS(
-                Vector3.Lerp(startTx.translation, endTx.translation, lerpT),
-                Quaternion.Slerp(startTx.rotation, endTx.rotation, lerpT),
-                Mathf.Lerp(startTx.scale, endTx.scale, lerpT)
+
+              Vector3.Lerp(startTx.translation, endTx.translation, lerpT),
+
+              Quaternion.Slerp(startTx.rotation, endTx.rotation, lerpT),
+
+              Mathf.Lerp(startTx.scale, endTx.scale, lerpT)
+
             );
             return result;
         }
@@ -138,12 +146,6 @@ namespace TiltBrush
 
         private void UpdateLazyInputVisuals()
         {
-            if (MarkovPenDrawingPanel.IsOpen && MarkovPenDrawingPanel.Instance != null)
-            {
-                Debug.LogError("Markov pen drawing panel is open, but lazy input is active!");
-                EndLazyInputVisuals();
-                return;
-            }
             BeginLazyInputVisuals();
 
             Transform brushAttachTransform = InputManager.m_Instance.GetBrushControllerAttachPoint();

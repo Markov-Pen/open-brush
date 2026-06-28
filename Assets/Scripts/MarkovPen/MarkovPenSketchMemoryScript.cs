@@ -5,13 +5,13 @@ using System.Reflection;
 
 namespace TiltBrush
 {
-    /// @brief Tracks strokes that existed before Markov drawing starts and deletes newly created strokes.
+    /// @brief Tracks strokes that existed before Markov drawing starts and deletes newly created strokes
     /// Uses reflection to read current stroke references from SketchMemoryScript without modifying it.
     public class MarkovPenSketchMemoryScript
     {
         private static readonly HashSet<Stroke> s_StrokesBeforeMarkovDrawing = new();
 
-        /// @brief Start capturing the current sketch stroke state before Markov drawing begins.
+        /// @brief Start capturing the current sketch stroke state before Markov drawing begins
         /// Stores all currently existing strokes so newly created Markov strokes can be detected later.
         public static void BeginMarkovStrokeCapture()
         {
@@ -26,13 +26,13 @@ namespace TiltBrush
             }
         }
 
-        /// @brief End Markov stroke capture.
+        /// @brief End Markov stroke capture
         /// Keeps the captured stroke snapshot available until deletion or the next capture begins.
         public static void EndMarkovStrokeCapture()
         {
         }
 
-        /// @brief Delete all strokes that were created after Markov stroke capture started.
+        /// @brief Delete all strokes that were created after Markov stroke capture started
         /// Keeps the saved Markov point lists unchanged.
         public static void DeleteNewMarkovStrokes()
         {
@@ -57,7 +57,7 @@ namespace TiltBrush
             s_StrokesBeforeMarkovDrawing.Clear();
         }
 
-        /// @brief Get all current strokes found inside SketchMemoryScript through reflection.
+        /// @brief Get all current strokes found inside SketchMemoryScript through reflection
         /// @return Enumerable collection of current stroke references.
         private static IEnumerable<Stroke> GetAllCurrentStrokes()
         {

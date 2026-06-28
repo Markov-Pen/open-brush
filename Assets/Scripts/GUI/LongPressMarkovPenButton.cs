@@ -2,7 +2,7 @@
 
 namespace TiltBrush
 {
-    /// @brief Handles a button with separate normal-press and long-press behaviour.
+    /// @brief Handles a button with separate normal-press and long-press behaviour
     /// A normal press activates the configured Markov tool without opening a panel.
     /// A long press activates the configured long-press tool and toggles the assigned panel.
     public class LongPressMarkovPenButton : BaseButton
@@ -23,7 +23,7 @@ namespace TiltBrush
         private bool m_HasLongPressTriggered;
         private bool m_WasLongPressPanelOpen;
 
-        /// @brief Initializes button state and subscribes to tool-change notifications.
+        /// @brief Initialize button state and subscribes to tool-change notifications
         protected override void Awake()
         {
             base.Awake();
@@ -34,7 +34,7 @@ namespace TiltBrush
             m_WasLongPressPanelOpen = IsLongPressPanelOpen();
         }
 
-        /// @brief Removes event subscriptions before the button is destroyed.
+        /// @brief Remove event subscriptions before the button is destroyed
         protected override void OnDestroy()
         {
             App.Switchboard.ToolChanged -= UpdateVisuals;
@@ -42,7 +42,7 @@ namespace TiltBrush
             base.OnDestroy();
         }
 
-        /// @brief Updates the button selection when the long-press panel opens or closes.
+        /// @brief Update the button selection when the long-press panel opens or closes
         private void Update()
         {
             bool isLongPressPanelOpen = IsLongPressPanelOpen();
@@ -56,7 +56,7 @@ namespace TiltBrush
             RefreshSelectionVisuals();
         }
 
-        /// @brief Starts a button press and resets long-press tracking.
+        /// @brief Start a button press and reset long-press tracking
         /// @param raycastHitInfo The raycast hit information for the interaction.
         public override void ButtonPressed(RaycastHit raycastHitInfo)
         {
@@ -75,7 +75,7 @@ namespace TiltBrush
             m_HasLongPressTriggered = false;
         }
 
-        /// @brief Tracks a held button press and triggers the long-press action when required.
+        /// @brief Track a held button press and triggers the long-press action when required
         /// @param raycastHitInfo The raycast hit information for the interaction.
         public override void ButtonHeld(RaycastHit raycastHitInfo)
         {
@@ -103,7 +103,7 @@ namespace TiltBrush
             SetButtonUntouched();
         }
 
-        /// @brief Activates or deactivates the normal-press tool when no long press was triggered.
+        /// @brief Activate or deactivates the normal-press tool when no long press was triggered
         public override void ButtonReleased()
         {
             if (m_HasLongPressTriggered)
@@ -122,7 +122,7 @@ namespace TiltBrush
             SetButtonUntouched();
         }
 
-        /// @brief Tries to toggle the configured normal-press tool.
+        /// @brief Try to toggle the configured normal-press tool
         /// @return True if the tool state was changed successfully.
         private bool TryToggleNormalPressTool()
         {
@@ -144,7 +144,7 @@ namespace TiltBrush
         }
 
 
-        /// @brief Updates the button appearance when the controller starts hovering over it.
+        /// @brief Update the button appearance when the controller starts hovering over it
         public override void GainFocus()
         {
             if (!IsAvailable())
@@ -169,14 +169,14 @@ namespace TiltBrush
             m_HasLongPressTriggered = false;
         }
 
-        /// @brief Updates the base button visuals and refreshes the selected state.
+        /// @brief Update the base button visuals and refreshes the selected state
         public override void UpdateVisuals()
         {
             base.UpdateVisuals();
             RefreshSelectionVisuals();
         }
 
-        /// @brief Updates the activated visual state based on the active tool and panel state.
+        /// @brief Update the activated visual state based on the active tool and panel state
         private void RefreshSelectionVisuals()
         {
             bool isNormalPressToolActive = IsNormalPressToolActive();
@@ -193,7 +193,7 @@ namespace TiltBrush
             SetButtonActivated(isButtonSelected);
         }
 
-        /// @brief Checks whether the normal-press tool is currently active.
+        /// @brief Check whether the normal-press tool is currently active
         /// @return True if the configured normal-press tool is active.
         private bool IsNormalPressToolActive()
         {
@@ -206,7 +206,7 @@ namespace TiltBrush
                 m_NormalPressTool;
         }
 
-        /// @brief Checks whether the configured long-press panel is currently open.
+        /// @brief Check whether the configured long-press panel is currently open
         /// @return True if the configured long-press panel is open.
         private bool IsLongPressPanelOpen()
         {
@@ -214,7 +214,7 @@ namespace TiltBrush
                 PanelManager.m_Instance.IsPanelOpen(m_LongPressPanelType);
         }
 
-        /// @brief Tries to activate the specified tool.
+        /// @brief Try to activate the specified tool
         /// @param toolType The tool type to activate.
         /// @return True if the tool was activated successfully.
         private bool TryActivateTool(BaseTool.ToolType toolType)
@@ -230,7 +230,7 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Tries to open or close the configured long-press panel.
+        /// @brief Try to open or close the configured long-press panel
         /// @return True if the panel action was completed successfully.
         private bool TryToggleLongPressPanel()
         {
@@ -274,7 +274,7 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Plays the configured pressed audio feedback.
+        /// @brief Play the configured pressed audio feedback
         private void PlayPressedAudio()
         {
             if (!m_ButtonHasPressedAudio)

@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 
 namespace TiltBrush
 {
-    /// @brief Provides the drawing panel used by the Markov pen drawing tool.
+    /// @brief Provides the drawing panel used by the Markov pen drawing tool
     /// Handles panel lifetime state, panel alignment, drawing collider raycasts,
     /// button raycasts, and panel button actions.
     public class MarkovPenDrawingPanel : BasePanel
@@ -41,37 +41,37 @@ namespace TiltBrush
         private Vector3 m_SaveButtonBaseScale;
         private Vector3 m_CloseButtonBaseScale;
 
-        /// @brief Gets the active Markov drawing panel instance.
+        /// @brief Get the active Markov drawing panel instance
         public static MarkovPenDrawingPanel Instance
         {
             get { return s_Instance; }
         }
 
-        /// @brief Gets whether the Markov drawing panel is currently open.
+        /// @brief Get whether the Markov drawing panel is currently open
         public static bool IsOpen
         {
             get { return s_IsOpen; }
         }
 
-        /// @brief Gets the collider used for drawing input.
+        /// @brief Get the collider used for drawing input
         public Collider DrawingCollider
         {
             get { return m_DrawingCollider; }
         }
 
-        /// @brief Gets the collider used for the save button.
+        /// @brief Get the collider used for the save button
         public Collider SaveButtonCollider
         {
             get { return m_SaveButtonCollider; }
         }
 
-        /// @brief Gets the collider used for the close button.
+        /// @brief Get the collider used for the close button
         public Collider CloseButtonCollider
         {
             get { return m_CloseButtonCollider; }
         }
 
-        /// @brief Initializes the panel instance and stores the initial visual state.
+        /// @brief Initialize the panel instance and stores the initial visual state
         protected override void Awake()
         {
             base.Awake();
@@ -100,7 +100,7 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Activates the panel and prepares the Markov drawing tool.
+        /// @brief Activate the panel and prepares the Markov drawing tool
         protected override void OnEnablePanel()
         {
             base.OnEnablePanel();
@@ -116,7 +116,7 @@ namespace TiltBrush
             MarkovPenDrawingFreepaint.OnPanelOpened();
         }
 
-        /// @brief Deactivates the panel and resets the Markov drawing tool state.
+        /// @brief Deactivate the panel and resets the Markov drawing tool state
         protected override void OnDisablePanel()
         {
             base.OnDisablePanel();
@@ -129,7 +129,7 @@ namespace TiltBrush
 
         }
 
-        /// @brief Positions the panel in front of the user's head at the configured distance.
+        /// @brief Position the panel in front of the user's head at the configured distance
         private void PositionPanelInFrontOfUser()
         {
             Transform headTransform = ViewpointScript.Head;
@@ -162,7 +162,7 @@ namespace TiltBrush
             transform.position = targetPosition;
         }
 
-        /// @brief Sets the currently hovered panel button and updates its visual state.
+        /// @brief Set the currently hovered panel button and updates its visual state
         /// @param buttonCollider The collider of the button that is currently hovered.
         public void SetHoveredButton(Collider buttonCollider)
         {
@@ -178,7 +178,7 @@ namespace TiltBrush
             SetButtonHoverVisual(m_HoveredButton, true);
         }
 
-        /// @brief Tries to get the closest point on the drawing collider using a ray.
+        /// @brief Try to get the closest point on the drawing collider using a ray
         /// @param ray The ray used to test the drawing collider.
         /// @param worldPoint The resulting world-space point on the drawing collider.
         /// @return True if the ray hit the drawing collider.
@@ -195,7 +195,7 @@ namespace TiltBrush
                 ref worldPoint);
         }
 
-        /// @brief Tries to get a drawing point from the drawing collider using a ray.
+        /// @brief Try to get a drawing point from the drawing collider using a ray
         /// @param ray The ray used to test the drawing collider.
         /// @param point2D The resulting local two-dimensional point on the drawing panel.
         /// @param worldPoint The resulting world-space point on the drawing panel.
@@ -222,7 +222,7 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Tries to get the closest button collider hit by a ray.
+        /// @brief Try to get the closest button collider hit by a ray
         /// @param ray The ray used to test the button colliders.
         /// @param worldPoint The resulting world-space point on the button collider.
         /// @return The closest hit button collider, or null if no button was hit.
@@ -254,7 +254,7 @@ namespace TiltBrush
             return closestButtonCollider;
         }
 
-        /// @brief Tries to update the closest raycast hit for a collider.
+        /// @brief Try to update the closest raycast hit for a collider
         /// @param collider The collider to test.
         /// @param ray The ray used for the collider test.
         /// @param closestDistance The current closest hit distance.
@@ -283,7 +283,7 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Updates the hover scale for a panel button.
+        /// @brief Update the hover scale for a panel button
         /// @param buttonCollider The collider of the button to update.
         /// @param isHovered True when the button is hovered.
         private void SetButtonHoverVisual(Collider buttonCollider, bool isHovered)
@@ -302,13 +302,13 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Applies the configured panel size without accumulating scale changes.
+        /// @brief Apply the configured panel size without accumulating scale changes
         private void ApplyPanelScale()
         {
             transform.localScale = m_InitialLocalScale * m_SizeMultiplier;
         }
 
-        /// @brief Faces the user horizontally while keeping the panel upright.
+        /// @brief Face the user horizontally while keeping the panel upright
         private void FaceUserButStayUpright()
         {
             Transform headTransform = ViewpointScript.Head;
@@ -337,7 +337,7 @@ namespace TiltBrush
                 Vector3.up);
         }
 
-        /// @brief Handles a press on a Markov drawing panel button.
+        /// @brief Handle a press on a Markov drawing panel button
         /// @param buttonCollider The collider of the pressed button.
         public void OnButtonPressed(Collider buttonCollider)
         {
