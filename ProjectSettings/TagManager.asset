@@ -5,7 +5,6 @@ TagManager:
   serializedVersion: 2
   tags:
   - Ignore
-  - Save_Btn
   layers:
   - Default
   - TransparentFX
