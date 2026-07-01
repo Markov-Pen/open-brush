@@ -72,7 +72,7 @@ namespace TiltBrush
         /// @brief Discard the current target curve so the next stroke starts fresh.
         ///
         /// Called on trigger-down to reset the growing target base/style curve between strokes.
-        public void ResetTarget()
+        public void newLine()
         {
             m_TargetMapping = new Mapping();
         }

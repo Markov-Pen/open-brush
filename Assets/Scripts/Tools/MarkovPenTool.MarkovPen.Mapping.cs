@@ -68,6 +68,11 @@ namespace TiltBrush
                 BaseCurve = baseCurve;
                 m_StyleCurve = styleCurve;
 
+                if (m_StyleCurve.ArcLength() < m_SamplingInterval)
+                {
+                    return;
+                }
+
                 //compute sampling interval
                 float samplingInterval = ComputeSamplingInterval();
                 Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
@@ -139,8 +144,6 @@ namespace TiltBrush
                 int numSamples =
                     Mathf.RoundToInt(m_StyleCurve.ArcLength() / m_SamplingInterval);
 
-                numSamples= Math.Max(numSamples, 5);
-
                 return m_StyleCurve.ArcLength() / numSamples;
             }
 
@@ -170,6 +173,7 @@ namespace TiltBrush
 
                     m_Mapping.Add(
                         new Vector2(projections[i], offsetAlongNormal));
+                        
                 }
             }
 
