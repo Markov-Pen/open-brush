@@ -392,15 +392,12 @@ namespace TiltBrush
             if (!s_IsBaseCurveDone)
             {
                 s_BaseCurvePoints.Add(point);
-                Debug.Log("SavePaintPoint: " + point);
-
                 return;
             }
 
             if (!s_IsStyleCurveDone)
             {
                 s_StyleCurvePoints.Add(point);
-                Debug.Log("SavePaintPoint: " + point);
             }
         }
 
