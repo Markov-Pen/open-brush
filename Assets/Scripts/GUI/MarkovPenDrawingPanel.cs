@@ -216,8 +216,10 @@ namespace TiltBrush
 
             worldPoint = raycastHit.point;
 
-            Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
-            point2D = new Vector2(localPoint.x, localPoint.y);
+            //Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
+            Vector3 panelSpacePoint =
+                Quaternion.Inverse(transform.rotation) * (worldPoint - transform.position);
+            point2D = new Vector2(panelSpacePoint.x, panelSpacePoint.y);
 
             return true;
         }
