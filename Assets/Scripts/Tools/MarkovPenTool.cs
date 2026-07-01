@@ -34,7 +34,7 @@ namespace TiltBrush
 
         private readonly List<GameObject> m_DebugPointObjects = new();
         private int m_DebugPointIndex;
-        private MarkovPen m_MarkovPen;
+        private MarkovPen m_MarkovPen= null;
 
         Tuple<Vector3, Quaternion> m_LastPointer= new Tuple<Vector3, Quaternion> (Vector3.zero, Quaternion.identity);
 
@@ -76,12 +76,16 @@ namespace TiltBrush
         public override void UpdateTool()
         {
 
-            if(m_MarkovPen == null) base.UpdateTool();
+            if(m_MarkovPen == null){
+                 base.UpdateTool();
+                 return;
+            }
 
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
             if (triggerDown)
             {
+                ClearDebugPoints();
                 m_MarkovPen.newLine();
                 var start = base.GetPointerPosition();
                 m_LastPointer = Tuple.Create(start.Item1, start.Item2);
@@ -101,12 +105,25 @@ namespace TiltBrush
 
             base.UpdateTool();
 
+            PointerScript pointer = PointerManager.m_Instance.MainPointer;
+
             while(!(pointers.Count == 0))
             {
                 m_LastPointer= pointers.First();
-                base.UpdateTool();
-                pointers.RemoveAt(0);     
 
+                base.UpdateTool();
+
+                //ShowDebugPoint(m_LastPointer.Item1);   
+
+/*
+                PointerManager.m_Instance.SetPointerTransform(
+                    InputManager.ControllerName.Brush,
+                    m_LastPointer.Item1,
+                    m_LastPointer.Item2);
+
+                pointer.UpdateLineFromObject(); 
+*/
+                pointers.RemoveAt(0);
             }
 
 
@@ -221,7 +238,7 @@ namespace TiltBrush
         {
 
             if(m_MarkovPen == null) return base.GetPointerPosition();
-            
+
             return (m_LastPointer.Item1, m_LastPointer.Item2);
         }
 
