@@ -55,7 +55,7 @@ namespace TiltBrush
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
                 float x = upVector.x;
                 float y = upVector.y;
-                upVector = new Vector3(y, -x, 0.0f);
+                upVector = new Vector3(-y, x, 0.0f);
                 foreach (var point in controlPoints)
                 {
                     AddControlPoint(point, upVector);
@@ -359,6 +359,7 @@ namespace TiltBrush
 
                 for (int index = 1; index < m_ArcLengthPositions.Count; ++index)
                 {
+
                     Project(
                         toProject,
                         m_ArcLengthPositions[index - 1],
@@ -386,11 +387,11 @@ namespace TiltBrush
 
                         float l1 = Vector3.Dot(toPoint, tangentFirst);
 
-                        projections.Add(-l1);
+                        projections.Add(l1);
                     }
                     else
                     {
-                        Vector3 toPoint = toProject - m_ControlPoints[^2];
+                        Vector3 toPoint = toProject - m_ControlPoints[^1];
 
                         Vector3 tangentLast =
                             ComputeTangent(
@@ -440,7 +441,7 @@ namespace TiltBrush
 
                 float middle = l1 + (l2 - l1) / 2.0f;
 
-                if (Math.Abs(d1) < 0.001 && Math.Abs(d2) < 0.001)
+                if (Math.Abs(d1) < 0.0001 && Math.Abs(d2) < 0.001)
                 {
                     projections.Add(middle);
                     return;

@@ -68,11 +68,6 @@ namespace TiltBrush
                 BaseCurve = baseCurve;
                 m_StyleCurve = styleCurve;
 
-                if (m_StyleCurve.ArcLength() < m_SamplingInterval)
-                {
-                    return;
-                }
-
                 //compute sampling interval
                 float samplingInterval = ComputeSamplingInterval();
                 Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
@@ -87,7 +82,7 @@ namespace TiltBrush
 
                 //compute maximum offset
                 ComputeMaxOffset();
-                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + baseCurve.Tap);
+                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + MaxOffset);
                 
                 //compute offsets
                 ComputeOffsets();
@@ -96,6 +91,7 @@ namespace TiltBrush
 
             public Mapping()
             {
+                LastIndex = -1;
                 BaseCurve = new BasePath();
                 m_StyleCurve = new Curve();
 
@@ -142,6 +138,8 @@ namespace TiltBrush
             {
                 int numSamples =
                     Mathf.RoundToInt(m_StyleCurve.ArcLength() / m_SamplingInterval);
+
+                numSamples= Math.Max(numSamples, 5);
 
                 return m_StyleCurve.ArcLength() / numSamples;
             }
@@ -202,6 +200,8 @@ namespace TiltBrush
 
                 if (IsRepetitive())
                 {
+                    Debug.Log("MarkovPen: Mapping is repetitive");
+
                     m_OffsetsAlongCurve.Insert(
                         0,
                         m_OffsetsAlongCurve.Last());
