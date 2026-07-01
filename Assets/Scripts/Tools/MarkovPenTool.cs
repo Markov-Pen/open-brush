@@ -75,6 +75,9 @@ namespace TiltBrush
         ///        point on B', and feed the result into the pointer manager.
         public override void UpdateTool()
         {
+
+            if(m_MarkovPen == null) base.UpdateTool();
+
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
             if (triggerDown)
@@ -216,6 +219,9 @@ namespace TiltBrush
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
+
+            if(m_MarkovPen == null) return base.GetPointerPosition();
+            
             return (m_LastPointer.Item1, m_LastPointer.Item2);
         }
 
