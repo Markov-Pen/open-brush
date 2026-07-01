@@ -392,12 +392,15 @@ namespace TiltBrush
             if (!s_IsBaseCurveDone)
             {
                 s_BaseCurvePoints.Add(point);
+                Debug.Log("SavePaintPoint: " + point);
+
                 return;
             }
 
             if (!s_IsStyleCurveDone)
             {
                 s_StyleCurvePoints.Add(point);
+                Debug.Log("SavePaintPoint: " + point);
             }
         }
 
@@ -501,7 +504,7 @@ namespace TiltBrush
 
             if (!drawingPanel.TryGetDrawingPoint(
                 ray,
-                out _,
+                out Vector2 panelPoint,
                 out Vector3 drawingWorldPoint))
             {
                 SetDrawingActive(false);
@@ -536,7 +539,7 @@ namespace TiltBrush
 
             if (isPaintingActive)
             {
-                SavePaintPoint(drawingWorldPoint);
+                SavePaintPoint(panelPoint);
             }
         }
     }
