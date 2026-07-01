@@ -43,7 +43,7 @@ namespace TiltBrush
             private Vector3 m_LastSmoothNormal = Vector3.zero;
 
 
-            public BasePath() : base(0.25f)
+            public BasePath() : base(0.75f)
             {
             }
 
