@@ -501,7 +501,7 @@ namespace TiltBrush
 
             if (!drawingPanel.TryGetDrawingPoint(
                 ray,
-                out _,
+                out Vector2 panelPoint,
                 out Vector3 drawingWorldPoint))
             {
                 SetDrawingActive(false);
@@ -536,7 +536,7 @@ namespace TiltBrush
 
             if (isPaintingActive)
             {
-                SavePaintPoint(drawingWorldPoint);
+                SavePaintPoint(panelPoint);
             }
         }
     }
