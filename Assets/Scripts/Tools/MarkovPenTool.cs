@@ -16,8 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 namespace TiltBrush
 {
@@ -29,22 +27,18 @@ namespace TiltBrush
     /// 
     public class MarkovPenTool : FreePaintTool
     {
-        [SerializeField] private float m_DebugPointSize = 0.015f;
-        [SerializeField] private bool m_ShowReconstructedPoints = true;
 
-        private readonly List<GameObject> m_DebugPointObjects = new();
-        private int m_DebugPointIndex;
-        private MarkovPen m_MarkovPen= null;
+        private MarkovPen m_MarkovPen = null;
 
-        Tuple<Vector3, Quaternion> m_LastPointer= new Tuple<Vector3, Quaternion> (Vector3.zero, Quaternion.identity);
+        Tuple<Vector3, Quaternion> m_LastPointer = new Tuple<Vector3, Quaternion>(Vector3.zero, Quaternion.identity);
 
         /// @brief Initialise the tool and all Markov model data structures.
         public override void Init()
         {
             base.Init();
-        
+
             //Debug.Log("Init");
-       }
+        }
 
         /// @brief Activate or deactivate the Markov Pen tool
         /// @param isEnabled true to activate the tool; false to deactivate it.
@@ -52,9 +46,9 @@ namespace TiltBrush
         {
             base.EnableTool(isEnabled);
             //Debug.Log("Tool Enabled");
-            List<Vector3> exampleListBasePath = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.25f, 0.0f, 0.0f), new(0.5f, 0.0f, 0.0f), new(0.75f, 0.0f, 0.0f), new(1.0f, 0.0f, 0.0f) };
+            List<Vector3> exampleListBasePath = MarkovPenDrawingFreepaint.BaseCurvePoints;
 
-            List<Vector3> exampleListStyleCurve = new List<Vector3>() { new(0.0f, 0.0f, 0.0f), new(0.125f, 0.125f, 0.0f), new(0.25f, 0.25f, 0.0f), new(0.375f, 0.125f, 0.0f), new(0.5f, 0.0f, 0.0f), new(0.625f, 0.125f, 0.0f), new(0.75f, 0.25f, 0.0f), new(0.875f, 0.125f, 0.0f), new(1.0f, 0.0f, 0.0f) };
+            List<Vector3> exampleListStyleCurve = MarkovPenDrawingFreepaint.StyleCurvePoints;
             CreateMarkovPen(exampleListBasePath, exampleListStyleCurve);
         }
 
@@ -76,16 +70,16 @@ namespace TiltBrush
         public override void UpdateTool()
         {
 
-            if(m_MarkovPen == null){
-                 base.UpdateTool();
-                 return;
+            if (m_MarkovPen == null)
+            {
+                base.UpdateTool();
+                return;
             }
 
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
             if (triggerDown)
             {
-                ClearDebugPoints();
                 m_MarkovPen.newLine();
                 var start = base.GetPointerPosition();
                 m_LastPointer = Tuple.Create(start.Item1, start.Item2);
@@ -95,25 +89,35 @@ namespace TiltBrush
 
             if (pointers.Count > 0)
             {
-                 m_LastPointer= pointers.First();
-                 pointers.RemoveAt(0);
+                m_LastPointer = pointers.First();
+                pointers.RemoveAt(0);
                 // m_EatInput= false;
             }
-            else{
-               // m_EatInput= true;
+            else
+            {
+                // m_EatInput= true;
             }
 
             base.UpdateTool();
 
             PointerScript pointer = PointerManager.m_Instance.MainPointer;
 
-            while(!(pointers.Count == 0))
+            while (pointers.Count > 0)
             {
-                m_LastPointer= pointers.First();
+                m_LastPointer = pointers[0];
 
-                base.UpdateTool();
 
-                //ShowDebugPoint(m_LastPointer.Item1);   
+                PointerManager.m_Instance.SetPointerTransform(
+                    InputManager.ControllerName.Brush,
+                    m_LastPointer.Item1,
+                    m_LastPointer.Item2);
+
+                if (pointer != null && pointer.IsCreatingStroke())
+                {
+                    pointer.UpdateLineFromObject();
+                }
+
+
 
 /*
                 PointerManager.m_Instance.SetPointerTransform(
@@ -121,7 +125,7 @@ namespace TiltBrush
                     m_LastPointer.Item1,
                     m_LastPointer.Item2);
 
-                pointer.UpdateLineFromObject(); 
+                pointer.UpdateLineFromObject();
 */
                 pointers.RemoveAt(0);
             }
@@ -193,51 +197,13 @@ namespace TiltBrush
             // Debug.Log("LateUpdate");
         }
 
-        private void ShowDebugPoint(Vector3 position)
-        {
-            if (!m_ShowReconstructedPoints) { return; }
-
-            // Unterschiedliche Farbe pro Punkt: Rot -> Gelb -> Grün -> Blau ...
-            Color color = Color.HSVToRGB(
-                Mathf.Repeat(m_DebugPointIndex * 0.12f, 1.0f),
-                0.9f,
-                1.0f);
-
-            GameObject point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            point.name = $"MarkovPoint_{m_DebugPointIndex}";
-            point.transform.position = position;
-            point.transform.localScale = Vector3.one * m_DebugPointSize;
-
-            // Collider wird für reine Visualisierung nicht benötigt.
-            Destroy(point.GetComponent<Collider>());
-
-            Renderer renderer = point.GetComponent<Renderer>();
-            renderer.material.color = color;
-
-            m_DebugPointObjects.Add(point);
-            m_DebugPointIndex++;
-        }
-
-        private void ClearDebugPoints()
-        {
-            foreach (GameObject point in m_DebugPointObjects)
-            {
-                if (point != null)
-                {
-                    Destroy(point);
-                }
-            }
-
-            m_DebugPointObjects.Clear();
-            m_DebugPointIndex = 0;
-        }
 
         /// @brief Return the world-space position and rotation for the brush pointer
         /// @returns A tuple of (position, rotation) in global space.
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
 
-            if(m_MarkovPen == null) return base.GetPointerPosition();
+            if (m_MarkovPen == null) return base.GetPointerPosition();
 
             return (m_LastPointer.Item1, m_LastPointer.Item2);
         }

@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Vector3 = System.Numerics.Vector3;
 
 namespace TiltBrush
 {
@@ -54,29 +53,23 @@ namespace TiltBrush
                     targetMapping.SetMaxOffset(offset);
                 }
 
-                int index =
-                    (targetMapping.LastIndex + 1) %
-                    m_ExampleMapping.GetMapping.Count;
+                int index = (targetMapping.LastIndex + 1) % m_ExampleMapping.GetMapping.Count;
 
-                List<Tuple<UnityEngine.Vector3, Quaternion>> pointers =
-                    new List<Tuple<UnityEngine.Vector3, Quaternion>>();
+                List<Tuple<UnityEngine.Vector3, Quaternion>> pointers = new List<Tuple<UnityEngine.Vector3, Quaternion>>();
 
                 while (true)
                 {
                     Vector2 offsets = m_ExampleMapping.GetOffsets(index);
 
-                    
                     if (!targetMapping.Apply(offsets, index))
                     {
                         break;
                     }
 
-                    Vector2 association = targetMapping.GetAssociation(
-                                targetMapping.GetMapping.Count - 1);
+                    Vector2 association = targetMapping.GetAssociation(targetMapping.GetMapping.Count - 1);
                     Tuple<UnityEngine.Vector3, UnityEngine.Vector3> endPoints = targetMapping.Inflate(association);
                     pointers.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
 
-                    // Increment the index in a circular manner to iterate through the example mapping
                     index = (index + 1) % m_ExampleMapping.GetMapping.Count;
                 }
 

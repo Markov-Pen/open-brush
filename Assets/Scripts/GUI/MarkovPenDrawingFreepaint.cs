@@ -42,10 +42,10 @@ namespace TiltBrush
         public static IReadOnlyList<Vector3> ControlPoints => s_ControlPoints;
 
         /// @brief Get all active points belonging to the base curve
-        public static IReadOnlyList<Vector3> BaseCurvePoints => s_BaseCurvePoints;
+        public static List<Vector3> BaseCurvePoints => s_BaseCurvePoints;
 
         /// @brief Get all active points belonging to the style curve
-        public static IReadOnlyList<Vector3> StyleCurvePoints => s_StyleCurvePoints;
+        public static List<Vector3> StyleCurvePoints => s_StyleCurvePoints;
 
         /// @brief Get the backed-up drawing points from the last saved Markov drawing
         public static IReadOnlyList<Vector3> BackupControlPoints => s_BackupControlPoints;
