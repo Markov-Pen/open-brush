@@ -57,11 +57,11 @@ namespace TiltBrush
             if (baseCurvePoints == null || styleCurvePoints == null ||
                 baseCurvePoints.Count == 0 || styleCurvePoints.Count == 0)
             {
-                Debug.LogError("MarkovPen: BaseCurvePoints oder StyleCurvePoints ist null oder leer.");
+                // Debug.LogError("MarkovPen: BaseCurvePoints oder StyleCurvePoints ist null oder leer.");
                 return;
             }
 
-            if (maxPoints <= 0)
+/*             if (maxPoints <= 0)
             {
                 Debug.LogError("MarkovPen: maxPoints muss größer als 0 sein.");
                 return;
@@ -70,7 +70,9 @@ namespace TiltBrush
             var shortenedBasePath = new List<Vector3>(baseCurvePoints);
 
             List<Vector3> shortenedStyleCurve = ReduceCurvePoints(styleCurvePoints, maxPoints);
-            CreateMarkovPen(shortenedBasePath, shortenedStyleCurve);
+            CreateMarkovPen(shortenedBasePath, shortenedStyleCurve); */
+            CreateMarkovPen(baseCurvePoints, styleCurvePoints);
+
         }
 
         private static List<Vector3> ReduceCurvePoints(List<Vector3> points, int maxPointCount)

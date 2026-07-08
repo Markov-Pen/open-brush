@@ -33,7 +33,7 @@ namespace TiltBrush
             public float Continuity = 0f;
             public float Bias = 0f;
 
-            private Vector3? m_LastInput = null;
+            private Vector3 m_LastInput = Vector3.zero;
 
             private const float k_Responsiveness = 1f;
 
@@ -74,9 +74,13 @@ namespace TiltBrush
                     return;
                 }
 
-                if (m_LastInput == null)
+                if (m_LastInput == Vector3.zero)
                 {
                     m_LastInput = controlPoint;
+                    return;
+                }
+
+                if(Vector3.Distance(m_LastInput, controlPoint)<0.1){
                     return;
                 }
 

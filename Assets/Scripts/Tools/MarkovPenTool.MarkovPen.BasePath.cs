@@ -376,7 +376,7 @@ namespace TiltBrush
                         Vector3 toPoint = toProject - m_ControlPoints[0];
 
                         Vector3 tangentFirst =
-                            -ComputeTangent(
+                            ComputeTangent(
                                     m_ControlPoints[0],
                                     m_ControlPoints[0],
                                     m_ControlPoints[1],
