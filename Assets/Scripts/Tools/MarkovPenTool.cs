@@ -74,7 +74,10 @@ namespace TiltBrush
             CreateMarkovPen(baseCurvePoints, styleCurvePoints);
 
         }
-
+        /// @brief Reduces a curve point list to a maximum number of points while preserving the first point, last point, and important local peaks.
+        /// @param points The original list of curve points that should be reduced.
+        /// @param maxPointCount The maximum number of points that should remain in the reduced curve.
+        /// @return A reduced list of curve points, ordered by their original position in the curve.
         private static List<Vector3> ReduceCurvePoints(List<Vector3> points, int maxPointCount)
         {
             if (points.Count <= maxPointCount)
