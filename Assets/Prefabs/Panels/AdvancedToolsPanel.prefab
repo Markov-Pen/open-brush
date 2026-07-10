@@ -2598,6 +2598,11 @@ MonoBehaviour:
   m_LongPressTool: 11003
   m_LongPressPanelType: 99999
   m_AlwaysSpawnPanel: 0
+  m_PanelRightOffsetFromLeftController: 3.2
+  m_PanelForwardOffsetFromLeftController: -0.8
+  m_PanelUpOffsetFromLeftController: 0.05
+  m_UseHeadRotationForPanel: 1
+  m_PanelRotationOffsetEulers: {x: 0, y: 0, z: 0}
   references:
     version: 2
     RefIds: []

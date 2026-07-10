@@ -28,7 +28,7 @@ namespace TiltBrush
     public class MarkovPenTool : FreePaintTool
     {
 
-        private MarkovPen m_MarkovPen = null;
+        private static MarkovPen m_MarkovPen = null;
 
         Tuple<Vector3, Quaternion> m_LastPointer = new Tuple<Vector3, Quaternion>(Vector3.zero, Quaternion.identity);
 
@@ -71,7 +71,7 @@ namespace TiltBrush
 
             List<Vector3> shortenedStyleCurve = ReduceCurvePoints(styleCurvePoints, maxPoints);
             CreateMarkovPen(shortenedBasePath, shortenedStyleCurve); */
-            CreateMarkovPen(baseCurvePoints, styleCurvePoints);
+
 
         }
         /// @brief Reduces a curve point list to a maximum number of points while preserving the first point, last point, and important local peaks.
@@ -367,7 +367,7 @@ namespace TiltBrush
         /// 
         /// @param basePath - Control Points of the given example Base Path
         /// @param styleCurve - Control points of the given example Style Curve
-        public void CreateMarkovPen(List<Vector3> basePath, List<Vector3> styleCurve)
+        public static void CreateMarkovPen(List<Vector3> basePath, List<Vector3> styleCurve)
         {
             m_MarkovPen = new MarkovPen(basePath, styleCurve);
         }
