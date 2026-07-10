@@ -46,122 +46,6 @@ namespace TiltBrush
         public override void EnableTool(bool isEnabled)
         {
             base.EnableTool(isEnabled);
-
-            if (!isEnabled)
-            {
-                return;
-            }
-
-            List<Vector3> baseCurvePoints = MarkovPenDrawingFreepaint.BaseCurvePoints;
-            List<Vector3> styleCurvePoints = MarkovPenDrawingFreepaint.StyleCurvePoints;
-            if (baseCurvePoints == null || styleCurvePoints == null ||
-                baseCurvePoints.Count == 0 || styleCurvePoints.Count == 0)
-            {
-                return;
-            }
-            
-
-        }
-        /// @brief Reduces a curve point list to a maximum number of points while preserving the first point, last point, and important local peaks.
-        /// @param points The original list of curve points that should be reduced.
-        /// @param maxPointCount The maximum number of points that should remain in the reduced curve.
-        /// @return A reduced list of curve points, ordered by their original position in the curve.
-        private static List<Vector3> ReduceCurvePoints(List<Vector3> points, int maxPointCount)
-        {
-            if (points.Count <= maxPointCount)
-            {
-                return new List<Vector3>(points);
-            }
-
-            if (maxPointCount == 1)
-            {
-                return new List<Vector3> { points[0] };
-            }
-
-            var selectedIndices = new HashSet<int>
-            {
-                0,
-                points.Count - 1
-            };
-
-            var peaks = new List<(int Index, float Importance)>();
-
-            for (int i = 1; i < points.Count - 1; i++)
-            {
-                float previousY = points[i - 1].y;
-                float currentY = points[i].y;
-                float nextY = points[i + 1].y;
-
-                bool isHighPoint = currentY >= previousY && currentY >= nextY;
-                bool isLowPoint = currentY <= previousY && currentY <= nextY;
-
-                if (isHighPoint || isLowPoint)
-                {
-                    float importance;
-
-                    if (isHighPoint)
-                    {
-                        importance = currentY - Mathf.Max(previousY, nextY);
-                    }
-                    else
-                    {
-                        importance = Mathf.Min(previousY, nextY) - currentY;
-                    }
-
-                    peaks.Add((i, importance));
-                }
-            }
-
-            peaks.Sort((a, b) => b.Importance.CompareTo(a.Importance));
-
-            foreach ((int index, _) in peaks)
-            {
-                if (selectedIndices.Count >= maxPointCount)
-                {
-                    break;
-                }
-
-                selectedIndices.Add(index);
-            }
-
-            while (selectedIndices.Count < maxPointCount)
-            {
-                var orderedIndices = selectedIndices.OrderBy(index => index).ToList();
-
-                int bestIndex = -1;
-                int largestGap = 0;
-
-                for (int i = 0; i < orderedIndices.Count - 1; i++)
-                {
-                    int left = orderedIndices[i];
-                    int right = orderedIndices[i + 1];
-
-                    int gap = right - left;
-
-                    if (gap > 1 && gap > largestGap)
-                    {
-                        largestGap = gap;
-
-                        bestIndex = left + gap / 2;
-                    }
-                }
-
-                if (bestIndex == -1)
-                {
-                    break;
-                }
-
-                selectedIndices.Add(bestIndex);
-            }
-
-            var result = new List<Vector3>(selectedIndices.Count);
-
-            foreach (int index in selectedIndices.OrderBy(index => index))
-            {
-                result.Add(points[index]);
-            }
-
-            return result;
         }
 
         /// @brief Show or hide the tool's visual indicators
@@ -203,11 +87,6 @@ namespace TiltBrush
             {
                 m_LastPointer = pointers.First();
                 pointers.RemoveAt(0);
-                // m_EatInput= false;
-            }
-            else
-            {
-                // m_EatInput= true;
             }
 
             base.UpdateTool();
