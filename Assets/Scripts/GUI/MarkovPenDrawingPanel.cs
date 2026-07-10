@@ -130,7 +130,6 @@ namespace TiltBrush
 
             List<Vector3> baseCurvePoints = MarkovPenDrawingFreepaint.BaseCurvePoints;
             List<Vector3> styleCurvePoints = MarkovPenDrawingFreepaint.StyleCurvePoints;
-
             if (m_IsSaved)
             {
                 MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
@@ -302,7 +301,7 @@ namespace TiltBrush
             {
                 return;
             }
-
+            s_IsOpen = false;
             if (buttonCollider == m_CloseButtonCollider)
             {
                 MarkovPenDrawingFreepaint.RestorePaintPointListsFromBackup();
