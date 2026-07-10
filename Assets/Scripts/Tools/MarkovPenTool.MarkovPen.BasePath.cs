@@ -15,8 +15,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
-using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace TiltBrush
@@ -33,23 +31,23 @@ namespace TiltBrush
         {
             public float Tap = 0f;
 
-            private List<Vector3> m_UpVectors = new List<Vector3>();
+            private List<Vector3> m_UpVectors = new();
 
-            private List<Vector3> m_SmoothNormals = new List<Vector3>();
+            private List<Vector3> m_SmoothNormals = new();
 
             // Last normal returned by SmoothNormalAt, used to keep the sign continuous between
             // consecutive synthesis queries so the styled offset never flips to the other side of
             // the curve (which shows up as ~2x-offset jumps in the stroke). Zero = uninitialized.
             private Vector3 m_LastSmoothNormal = Vector3.zero;
 
-
+            /// @brief Construct a target base path
             public BasePath() : base(0.75f)
             {
             }
 
-            /// @brief Construct Base Curve 
+            /// @brief Construct an exmple base path
             ///
-            /// @params List<Vector3> controlPoints - control points forming basepath
+            /// @params List<Vector3> controlPoints - control points forming base path
             public BasePath(List<Vector3> controlPoints)
             {
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
@@ -61,13 +59,6 @@ namespace TiltBrush
                 AddControlPoint(controlPoints.Last(), upVector);
                 Finish();
             }
-
-            /// @brief Set the tap value for smoothing. A non-zero tap initiates the smoothing
-            /// process during the addition of control points.
-            /// @param tap The tap value for smoothing.
-            
-
-
 
             /// @brief Add a control point to the base curve and update related information.
             /// Extends the base class method to incorporate smoothing functionalities based on the tap value.

@@ -44,7 +44,7 @@ namespace TiltBrush
             /// Iteratively applies offsets to the target mapping, generating associations and inflating points.
             /// @param targetMapping The target mapping to be reconstructed.
             /// @return A list of associations representing the reconstructed relationship between curves.
-            public List<Tuple<UnityEngine.Vector3, Quaternion>> Reconstruct(Mapping targetMapping)
+            public List<Tuple<Vector3, Quaternion>> Reconstruct(Mapping targetMapping)
             {
                 float offset = m_ExampleMapping.MaxOffset;
 
@@ -55,7 +55,7 @@ namespace TiltBrush
 
                 int index = (targetMapping.LastIndex + 1) % m_ExampleMapping.GetMapping.Count;
 
-                List<Tuple<UnityEngine.Vector3, Quaternion>> pointers = new List<Tuple<UnityEngine.Vector3, Quaternion>>();
+                List<Tuple<Vector3, Quaternion>> pointers = new List<Tuple<Vector3, Quaternion>>();
 
                 while (true)
                 {
@@ -67,7 +67,7 @@ namespace TiltBrush
                     }
 
                     Vector2 association = targetMapping.GetAssociation(targetMapping.GetMapping.Count - 1);
-                    Tuple<UnityEngine.Vector3, UnityEngine.Vector3> endPoints = targetMapping.Inflate(association);
+                    Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
                     pointers.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
 
                     index = (index + 1) % m_ExampleMapping.GetMapping.Count;

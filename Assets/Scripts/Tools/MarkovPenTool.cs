@@ -30,16 +30,7 @@ namespace TiltBrush
 
         private static MarkovPen m_MarkovPen = null;
 
-        Tuple<Vector3, Quaternion> m_LastPointer = new Tuple<Vector3, Quaternion>(Vector3.zero, Quaternion.identity);
-
-        private int maxPoints = 50;
-        /// @brief Initialise the tool and all Markov model data structures.
-        public override void Init()
-        {
-            base.Init();
-
-            //Debug.Log("Init");
-        }
+        Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 
         /// @brief Activate or deactivate the Markov Pen tool
         /// @param isEnabled true to activate the tool; false to deactivate it.
@@ -54,7 +45,6 @@ namespace TiltBrush
         public override void HideTool(bool isHidden)
         {
             base.HideTool(isHidden);
-            //Debug.Log("Tool Hidden");
         }
 
         /// @brief Read controller input and drive synthesis
@@ -76,7 +66,7 @@ namespace TiltBrush
 
             if (triggerDown)
             {
-                m_MarkovPen.newLine();
+                m_MarkovPen.NewLine();
                 var start = base.GetPointerPosition();
                 m_LastPointer = Tuple.Create(start.Item1, start.Item2);
             }
@@ -112,16 +102,6 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Update pointer transforms
-        /// 
-        /// Called only on frames that UpdateTool() has been called.
-        /// Guaranteed to be called after new poses have been received from OpenVR.
-        public override void LateUpdateTool()
-        {
-            base.LateUpdateTool();
-            // Debug.Log("LateUpdate");
-        }
-
 
         /// @brief Return the world-space position and rotation for the brush pointer
         /// @returns A tuple of (position, rotation) in global space.
@@ -131,37 +111,6 @@ namespace TiltBrush
             if (m_MarkovPen == null) return base.GetPointerPosition();
 
             return (m_LastPointer.Item1, m_LastPointer.Item2);
-        }
-
-        /// @brief Set the visual materials on the controller geometry to reflect tool state
-        /// @param controller The controller whose materials should be updated.
-        public override void AssignControllerMaterials(InputManager.ControllerName controller)
-        {
-            base.AssignControllerMaterials(controller);
-        }
-
-
-        /// @brief Adjust the brush size by the given delta
-        /// @param adjustAmount Signed normalised adjustment amount.
-        public override void UpdateSize(float adjustAmount)
-        {
-            base.UpdateSize(adjustAmount);
-        }
-
-
-
-        /// @brief Return the current brush size as a normalised [0, 1] value
-        /// @returns Brush size in the [0, 1] range.
-        public override float GetSize01()
-        {
-            return base.GetSize01();
-        }
-
-        /// @brief Return whether the brush size can currently be adjusted
-        /// @returns true if size adjustment is allowed in the current application state.
-        public override bool CanAdjustSize()
-        {
-            return base.CanAdjustSize();
         }
 
         /// @brief Create a new Markov pen

@@ -37,12 +37,12 @@ namespace TiltBrush
             private float m_SamplingInterval = k_SamplingInterval;
 
             //Mapping
-            private List<Vector2> m_Mapping = new List<Vector2>();
+            private List<Vector2> m_Mapping = new();
 
             //Offsets
             private List<float> m_OffsetsAlongCurve;
 
-            private float m_MaxOffset = 0f;
+            private float m_MaxOffset;
 
             public int LastIndex { get; private set; }
 

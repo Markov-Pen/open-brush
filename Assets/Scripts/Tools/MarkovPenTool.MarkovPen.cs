@@ -13,7 +13,6 @@
 // limitations under the License.
 using System;
 using System.Collections.Generic;
-using System.Data;
 using UnityEngine;
 
 namespace TiltBrush
@@ -25,7 +24,7 @@ namespace TiltBrush
     public partial class MarkovPen 
     {
         private Mapping m_ExampleMapping;
-        private Mapping m_TargetMapping = new Mapping();
+        private Mapping m_TargetMapping = new();
         private Synthesizer m_Synthesizer;
 
         private Curve m_ExampleStyleCurve;
@@ -72,7 +71,7 @@ namespace TiltBrush
         /// @brief Discard the current target curve so the next stroke starts fresh.
         ///
         /// Called on trigger-down to reset the growing target base/style curve between strokes.
-        public void newLine()
+        public void NewLine()
         {
             m_TargetMapping = new Mapping();
         }

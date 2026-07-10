@@ -27,7 +27,7 @@ namespace TiltBrush
         public class Curve
         {
             protected List<float> m_ArcLengthPositions;
-            protected List<Vector3> m_ControlPoints = new List<Vector3>();
+            protected List<Vector3> m_ControlPoints = new();
 
             public float Tension = 0f;
             public float Continuity = 0f;
@@ -373,8 +373,8 @@ namespace TiltBrush
                 m_ControlPoints.Add(Interpolate(
                     m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
                     m_ControlPoints[^1],
-                    (Vector3)m_LastInput,
-                    (Vector3)m_LastInput,
+                    m_LastInput,
+                    m_LastInput,
                     0,
                     0,
                     0,
