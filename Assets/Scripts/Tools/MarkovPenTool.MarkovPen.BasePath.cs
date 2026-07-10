@@ -355,6 +355,15 @@ namespace TiltBrush
 
                 Vector3 normal = new Vector3(-line.y, line.x, 0f);
 
+                if(m_ControlPoints.Count == 2)
+                {
+                    Vector3 toPoint = toProject - m_ControlPoints[0];   
+                    projections.Add(Vector3.Dot(toPoint, line));
+
+                    return projections;
+                }
+
+
                 for (int index = 1; index < m_ArcLengthPositions.Count; ++index)
                 {
 
