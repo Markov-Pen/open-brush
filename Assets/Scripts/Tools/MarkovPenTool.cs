@@ -27,7 +27,6 @@ namespace TiltBrush
     /// 
     public class MarkovPenTool : FreePaintTool
     {
-
         private static MarkovPen m_MarkovPen = null;
 
         Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
@@ -55,7 +54,6 @@ namespace TiltBrush
         ///        point on B', and feed the result into the pointer manager.
         public override void UpdateTool()
         {
-
             if (m_MarkovPen == null)
             {
                 base.UpdateTool();
@@ -101,7 +99,6 @@ namespace TiltBrush
                 pointers.RemoveAt(0);
             }
         }
-
 
         /// @brief Return the world-space position and rotation for the brush pointer
         /// @returns A tuple of (position, rotation) in global space.

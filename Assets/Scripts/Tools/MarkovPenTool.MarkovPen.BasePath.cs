@@ -20,8 +20,7 @@ using Vector3 = UnityEngine.Vector3;
 namespace TiltBrush
 {
     public partial class MarkovPen
-    {
-        
+    { 
         /// @class BaseCurve
         /// @brief Represents the base curve of the MarkovPen.
         ///
@@ -353,7 +352,6 @@ namespace TiltBrush
 
                     return projections;
                 }
-
 
                 for (int index = 1; index < m_ArcLengthPositions.Count; ++index)
                 {
