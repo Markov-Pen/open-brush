@@ -55,12 +55,10 @@ namespace TiltBrush
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
                 float x = upVector.x;
                 float y = upVector.y;
-                upVector = new Vector3(-y, x, 0.0f);
-                foreach (var point in controlPoints)
-                {
-                    AddControlPoint(point, upVector);
+                upVector = new Vector3(-y, x, 0.0f).normalized;
 
-                }
+                AddControlPoint(controlPoints.First(), upVector);
+                AddControlPoint(controlPoints.Last(), upVector);
                 Finish();
             }
 

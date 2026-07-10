@@ -57,21 +57,9 @@ namespace TiltBrush
             if (baseCurvePoints == null || styleCurvePoints == null ||
                 baseCurvePoints.Count == 0 || styleCurvePoints.Count == 0)
             {
-                // Debug.LogError("MarkovPen: BaseCurvePoints oder StyleCurvePoints ist null oder leer.");
                 return;
             }
-
-/*             if (maxPoints <= 0)
-            {
-                Debug.LogError("MarkovPen: maxPoints muss größer als 0 sein.");
-                return;
-            }
-
-            var shortenedBasePath = new List<Vector3>(baseCurvePoints);
-
-            List<Vector3> shortenedStyleCurve = ReduceCurvePoints(styleCurvePoints, maxPoints);
-            CreateMarkovPen(shortenedBasePath, shortenedStyleCurve); */
-
+            
 
         }
         /// @brief Reduces a curve point list to a maximum number of points while preserving the first point, last point, and important local peaks.
@@ -241,74 +229,8 @@ namespace TiltBrush
                     pointer.UpdateLineFromObject();
                 }
 
-
-
-/*
-                PointerManager.m_Instance.SetPointerTransform(
-                    InputManager.ControllerName.Brush,
-                    m_LastPointer.Item1,
-                    m_LastPointer.Item2);
-
-                pointer.UpdateLineFromObject();
-*/
                 pointers.RemoveAt(0);
             }
-
-
-
-/*
-            if (triggerDown || m_CurrentPoint == null)
-            {
-                m_MarkovPen.ResetTarget();
-                m_Overflow.Clear();
-
-                var start = base.GetPointerPosition();
-                m_CurrentPoint = Tuple.Create(start.Item1, start.Item2);
-            }
-            base.UpdateTool();
-
-            PointerScript pointer = PointerManager.m_Instance.MainPointer;
-
-            if (m_brushTrigger && pointer.IsCreatingStroke())
-            {
-                var toDraw = new List<Tuple<Vector3, Quaternion>>(m_Overflow);
-                m_Overflow.Clear();
-                toDraw.AddRange(m_MarkovPen.Reconstruct(base.GetPointerPosition()));
-
-                bool advanced = false;
-                for (int i = 0; i < toDraw.Count; i++)
-                {
-                    if (pointer.ShouldCurrentLineEnd())
-                    {
-                        for (int j = i; j < toDraw.Count; j++)
-                        {
-                            m_Overflow.Enqueue(toDraw[j]);
-                        }
-                        break;
-                    }
-
-                    if (i > 0)
-                    {
-                        var prev = toDraw[i - 1];
-                        PointerManager.m_Instance.SetPointerTransform(
-                            InputManager.ControllerName.Brush, prev.Item1, prev.Item2);
-                        pointer.UpdateLineFromObject();
-                    }
-
-                    m_CurrentPoint = toDraw[i];
-                    advanced = true;
-                }
-
-                // Leave the frontier as the pointer position so the manager's sample draws it (once).
-                if (advanced)
-                {
-                    PointerManager.m_Instance.SetPointerTransform(
-                        InputManager.ControllerName.Brush, m_CurrentPoint.Item1, m_CurrentPoint.Item2);
-                }
-            }
-
-            //Debug.Log("Update");
-            */
         }
 
         /// @brief Update pointer transforms
