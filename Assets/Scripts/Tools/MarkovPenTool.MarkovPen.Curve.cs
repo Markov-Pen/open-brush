@@ -188,7 +188,7 @@ namespace TiltBrush
                         0,
                         0).normalized;
 
-                    return m_ControlPoints[^2] +
+                    return m_ControlPoints[^1] +
                            (l - m_ArcLengthPositions.Last()) * tangent;
                 }
 
