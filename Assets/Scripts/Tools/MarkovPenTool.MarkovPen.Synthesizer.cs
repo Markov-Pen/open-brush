@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Vector3 = System.Numerics.Vector3;
 
 namespace TiltBrush
 {
@@ -46,7 +44,7 @@ namespace TiltBrush
             /// Iteratively applies offsets to the target mapping, generating associations and inflating points.
             /// @param targetMapping The target mapping to be reconstructed.
             /// @return A list of associations representing the reconstructed relationship between curves.
-            public List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>> Reconstruct(Mapping targetMapping)
+            public List<Tuple<Vector3, Quaternion>> Reconstruct(Mapping targetMapping)
             {
                 float offset = m_ExampleMapping.MaxOffset;
 
@@ -55,12 +53,9 @@ namespace TiltBrush
                     targetMapping.SetMaxOffset(offset);
                 }
 
-                int index =
-                    (targetMapping.LastIndex + 1) %
-                    m_ExampleMapping.GetMapping.Count;
+                int index = (targetMapping.LastIndex + 1) % m_ExampleMapping.GetMapping.Count;
 
-                List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>> associations =
-                    new List<Tuple<UnityEngine.Vector3, UnityEngine.Vector3>>();
+                List<Tuple<Vector3, Quaternion>> pointers = new List<Tuple<Vector3, Quaternion>>();
 
                 while (true)
                 {
@@ -71,16 +66,14 @@ namespace TiltBrush
                         break;
                     }
 
-                    associations.Add(
-                        targetMapping.Inflate(
-                            targetMapping.GetAssociation(
-                                targetMapping.GetMapping.Count - 1)));
+                    Vector2 association = targetMapping.GetAssociation(targetMapping.GetMapping.Count - 1);
+                    Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
+                    pointers.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
 
-                    // Increment the index in a circular manner to iterate through the example mapping
                     index = (index + 1) % m_ExampleMapping.GetMapping.Count;
                 }
 
-                return associations;
+                return pointers;
             }
 
             /// @brief Checks if the Synthesizer is trained with an example mapping.

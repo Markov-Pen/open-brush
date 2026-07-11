@@ -19,6 +19,17 @@ namespace TiltBrush
         [SerializeField] private BasePanel.PanelType m_LongPressPanelType;
         [SerializeField] private bool m_AlwaysSpawnPanel = false;
 
+        [Header("Long Press Panel Spawn")]
+        [SerializeField] private float m_PanelRightOffsetFromLeftController = 0.35f;
+        [SerializeField] private float m_PanelForwardOffsetFromLeftController = 0.15f;
+        [SerializeField] private float m_PanelUpOffsetFromLeftController = 0.05f;
+
+        [Header("Long Press Panel Rotation")]
+        [SerializeField] private bool m_UseHeadRotationForPanel = true;
+        [SerializeField] private Vector3 m_PanelRotationOffsetEulers = Vector3.zero;
+
+        private const float k_MinDirectionSqrMagnitude = 0.001f;
+
         private float m_PressTimer;
         private bool m_HasLongPressTriggered;
         private bool m_WasLongPressPanelOpen;
@@ -143,7 +154,6 @@ namespace TiltBrush
             return true;
         }
 
-
         /// @brief Update the button appearance when the controller starts hovering over it
         public override void GainFocus()
         {
@@ -246,10 +256,7 @@ namespace TiltBrush
             if (m_AlwaysSpawnPanel)
             {
                 PanelManager.m_Instance.DismissNonCorePanel(m_LongPressPanelType);
-
-                SketchControlsScript.m_Instance.OpenPanelOfType(
-                    m_LongPressPanelType,
-                    TrTransform.FromTransform(transform));
+                OpenLongPressPanel();
 
                 m_WasLongPressPanelOpen = true;
                 RefreshSelectionVisuals();
@@ -263,15 +270,75 @@ namespace TiltBrush
             }
             else
             {
-                SketchControlsScript.m_Instance.OpenPanelOfType(
-                    m_LongPressPanelType,
-                    TrTransform.FromTransform(transform));
-
+                OpenLongPressPanel();
                 m_WasLongPressPanelOpen = true;
             }
 
             RefreshSelectionVisuals();
             return true;
+        }
+
+        /// @brief Open the configured long-press panel at the custom spawn transform
+        private void OpenLongPressPanel()
+        {
+            SketchControlsScript.m_Instance.OpenPanelOfType(
+                m_LongPressPanelType,
+                GetLongPressPanelSpawnTransform());
+        }
+
+        /// @brief Build a panel spawn transform to the right of this left-controller button
+        /// The panel rotation follows the user's full head direction, including looking down/up.
+        /// @return The transform used by SketchControlsScript.OpenPanelOfType.
+        private TrTransform GetLongPressPanelSpawnTransform()
+        {
+            Transform headTransform = ViewpointScript.Head;
+
+            if (headTransform == null)
+            {
+                return TrTransform.FromTransform(transform);
+            }
+
+            Vector3 userRight = headTransform.right;
+
+            if (userRight.sqrMagnitude < k_MinDirectionSqrMagnitude)
+            {
+                userRight = transform.right;
+            }
+
+            userRight.Normalize();
+
+            Vector3 userForward = headTransform.forward;
+
+            if (userForward.sqrMagnitude < k_MinDirectionSqrMagnitude)
+            {
+                userForward = transform.forward;
+            }
+
+            userForward.Normalize();
+
+            Vector3 panelPosition =
+                transform.position +
+                userRight * m_PanelRightOffsetFromLeftController +
+                userForward * m_PanelForwardOffsetFromLeftController +
+                Vector3.up * m_PanelUpOffsetFromLeftController;
+
+            Quaternion panelRotation = transform.rotation;
+
+            if (m_UseHeadRotationForPanel)
+            {
+                panelRotation = Quaternion.LookRotation(
+                    userForward,
+                    headTransform.up);
+            }
+
+            panelRotation *= Quaternion.Euler(m_PanelRotationOffsetEulers);
+
+            TrTransform panelSpawnTransform = TrTransform.FromTransform(transform);
+            panelSpawnTransform.translation = panelPosition;
+            panelSpawnTransform.rotation = panelRotation;
+            panelSpawnTransform.scale = 1.0f;
+
+            return panelSpawnTransform;
         }
 
         /// @brief Play the configured pressed audio feedback
@@ -285,7 +352,7 @@ namespace TiltBrush
             AudioManager.m_Instance.ItemSelect(transform.position);
         }
 
-        /// @brief Resets the button to its untouched visual state.
+        /// @brief Resets the button to its untouched visual state
         private void SetButtonUntouched()
         {
             m_CurrentButtonState = ButtonState.Untouched;

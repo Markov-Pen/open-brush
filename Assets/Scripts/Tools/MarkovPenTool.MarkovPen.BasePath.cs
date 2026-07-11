@@ -15,48 +15,59 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace TiltBrush
 {
     public partial class MarkovPen
-    {
+    { 
         /// @class BaseCurve
         /// @brief Represents the base curve of the MarkovPen.
         ///
         /// The BaseCurve class extends the functionality of the Curve class and provides
         /// additional features such as projection, spline functionalities, and smoothing functionalities.
-        public class BaseCurve : Curve
+        public class BasePath : Curve
         {
-            private float m_Tap = 0f;
+            public float Tap = 0f;
 
-            private List<Vector3> m_UpVectors = new List<Vector3>();
+            private List<Vector3> m_UpVectors = new();
 
-            private List<Vector3> m_SmoothNormals = new List<Vector3>();
+            private List<Vector3> m_SmoothNormals = new();
 
+            // Last normal returned by SmoothNormalAt, used to keep the sign continuous between
+            // consecutive synthesis queries so the styled offset never flips to the other side of
+            // the curve (which shows up as ~2x-offset jumps in the stroke). Zero = uninitialized.
+            private Vector3 m_LastSmoothNormal = Vector3.zero;
 
-            public BaseCurve() : base(0.25f)
+            /// @brief Construct a target base path
+            public BasePath() : base(0.75f)
             {
             }
 
-            /// @brief Set the tap value for smoothing. A non-zero tap initiates the smoothing
-            /// process during the addition of control points.
-            /// @param tap The tap value for smoothing.
-            public void SetTap(float tap)
+            /// @brief Construct an exmple base path
+            ///
+            /// @params List<Vector3> controlPoints - control points forming base path
+            public BasePath(List<Vector3> controlPoints)
             {
-                m_Tap = tap;
+                Vector3 upVector = controlPoints.Last() - controlPoints.First();
+                float x = upVector.x;
+                float y = upVector.y;
+                upVector = new Vector3(-y, x, 0.0f).normalized;
+
+                AddControlPoint(controlPoints.First(), upVector);
+                AddControlPoint(controlPoints.Last(), upVector);
+                Finish();
             }
 
             /// @brief Add a control point to the base curve and update related information.
             /// Extends the base class method to incorporate smoothing functionalities based on the tap value.
             /// @param controlPoint The control point to be added to the base curve.
             /// @param upVector The up vector associated with the control point.
-            public override void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
+            public void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
             {
-                base.AddControlPoint(controlPoint, upVector);
+                base.AddControlPoint(controlPoint);
 
-                if (m_Tap == 0)
+                if (Tap == 0)
                 {
                     return;
                 }
@@ -71,7 +82,7 @@ namespace TiltBrush
                     return;
                 }
 
-                while (m_Tap <= m_ArcLengthPositions.Last() - m_ArcLengthPositions[m_SmoothNormals.Count])
+                while (Tap <= m_ArcLengthPositions.Last() - m_ArcLengthPositions[m_SmoothNormals.Count])
                 {
                     int index = m_SmoothNormals.Count;
 
@@ -94,13 +105,13 @@ namespace TiltBrush
             /// @return The computed smoothed tangent vector.
             private Vector3 ComputeSmoothTangent(float center)
             {
-                float windowSize = 2 * m_Tap + 1;
+                float windowSize = 2 * Tap + 1;
 
                 Vector3 smoothTangent = Vector3.zero;
 
                 for (
-                    float length = center - m_Tap;
-                    length <= center + m_Tap;
+                    float length = center - Tap;
+                    length <= center + Tap;
                     length += (1.0f / windowSize))
                 {
                     smoothTangent += FirstDerivativeAt(length).normalized;
@@ -179,7 +190,7 @@ namespace TiltBrush
             /// @return The computed smoothed normal vector at the specified arc length.
             public Vector3 SmoothNormalAt(float l)
             {
-                if (m_Tap == 0)
+                if (Tap == 0)
                 {
                     Vector3 line =
                         Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
@@ -191,19 +202,17 @@ namespace TiltBrush
 
                 if (l <= 0)
                 {
-                    return m_SmoothNormals[0];
+                    normal = m_SmoothNormals[0];
                 }
                 else if (l >= m_ArcLengthPositions.Last())
                 {
-                    return m_SmoothNormals.Last();
+                    normal = m_SmoothNormals.Last();
                 }
                 else
                 {
                     float t = TimeAt(l);
 
                     int index = SegmentIndex(t);
-
-                    Debug.Log("index: " + (m_ControlPoints.Count - index));
 
                     if (index >= 0 && index + 2 <= m_SmoothNormals.Count)
                     {
@@ -239,7 +248,20 @@ namespace TiltBrush
                     }
                 }
 
-                return normal.normalized;
+                normal = normal.normalized;
+
+                // Keep the normal on a consistent side between consecutive queries. The interpolated
+                // normal can flip sign as the curve grows; since the example offsets sit on one side,
+                // a flip throws the styled point across the curve (~2x-offset jump). Match the sign of
+                // the previous normal to stay smooth.
+                if (m_LastSmoothNormal != Vector3.zero &&
+                    Vector3.Dot(normal, m_LastSmoothNormal) < 0f)
+                {
+                    normal = -normal;
+                }
+                m_LastSmoothNormal = normal;
+
+                return normal;
             }
 
             /// @brief Compute the total arc length of the curve.
@@ -247,6 +269,12 @@ namespace TiltBrush
             /// @return The total arc length of the curve.
             public override float ArcLength()
             {
+
+                if (Tap == 0)
+                {
+                    return base.ArcLength();
+                }
+                
                 if (m_UpVectors.Count < 4)
                 {
                     return 0;
@@ -317,8 +345,17 @@ namespace TiltBrush
 
                 Vector3 normal = new Vector3(-line.y, line.x, 0f);
 
+                if(m_ControlPoints.Count == 2)
+                {
+                    Vector3 toPoint = toProject - m_ControlPoints[0];   
+                    projections.Add(Vector3.Dot(toPoint, line));
+
+                    return projections;
+                }
+
                 for (int index = 1; index < m_ArcLengthPositions.Count; ++index)
                 {
+
                     Project(
                         toProject,
                         m_ArcLengthPositions[index - 1],
@@ -335,7 +372,7 @@ namespace TiltBrush
                         Vector3 toPoint = toProject - m_ControlPoints[0];
 
                         Vector3 tangentFirst =
-                            -ComputeTangent(
+                            ComputeTangent(
                                     m_ControlPoints[0],
                                     m_ControlPoints[0],
                                     m_ControlPoints[1],
@@ -346,11 +383,11 @@ namespace TiltBrush
 
                         float l1 = Vector3.Dot(toPoint, tangentFirst);
 
-                        projections.Add(-l1);
+                        projections.Add(l1);
                     }
                     else
                     {
-                        Vector3 toPoint = toProject - m_ControlPoints[^2];
+                        Vector3 toPoint = toProject - m_ControlPoints[^1];
 
                         Vector3 tangentLast =
                             ComputeTangent(
@@ -400,7 +437,7 @@ namespace TiltBrush
 
                 float middle = l1 + (l2 - l1) / 2.0f;
 
-                if (Math.Abs(d1) < 0.25 && Math.Abs(d2) < 0.25)
+                if (Math.Abs(d1) < 0.0001 && Math.Abs(d2) < 0.001)
                 {
                     projections.Add(middle);
                     return;
@@ -444,7 +481,7 @@ namespace TiltBrush
             {
                 base.Finish();
 
-                if (m_ControlPoints.Count < 2 || m_Tap == 0)
+                if (m_ControlPoints.Count < 2 || Tap == 0)
                 {
                     return;
                 }

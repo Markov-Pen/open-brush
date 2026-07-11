@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace TiltBrush
 {
@@ -28,13 +27,13 @@ namespace TiltBrush
         public class Curve
         {
             protected List<float> m_ArcLengthPositions;
-            protected List<Vector3> m_ControlPoints = new List<Vector3>();
+            protected List<Vector3> m_ControlPoints = new();
 
             public float Tension = 0f;
             public float Continuity = 0f;
             public float Bias = 0f;
 
-            private Vector3? m_LastInput = null;
+            private Vector3 m_LastInput = Vector3.zero;
 
             private const float k_Responsiveness = 1f;
 
@@ -47,6 +46,19 @@ namespace TiltBrush
                 m_Responsiveness = responsiveness;
                 m_ArcLengthPositions = new List<float> { 0f };
             }
+            
+            /// @brief Construct Curve 
+            /// 
+            /// 
+            /// @params styleCurveControlPoints - Constrol points of the curve
+            public Curve(List<Vector3> styleCurveControlPoints): this()
+            {
+                foreach (var point in styleCurveControlPoints)
+                {
+                    AddControlPoint(point);
+                }
+                Finish();
+            }
 
             /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
             /// If the curve is empty, the control point is directly added. If it's the first control point,
@@ -54,8 +66,7 @@ namespace TiltBrush
             /// cubic Hermite interpolation (elasticurve implementation) to add a new point to the curve.
             /// The method also updates arc length information when the curve has at least three control points.
             /// @param controlPoint The new control point to be added.
-            /// @param upVector The up vector associated with the control point.
-            public virtual void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
+            public void AddControlPoint(Vector3 controlPoint)
             {
                 if (m_ControlPoints.Count == 0)
                 {
@@ -63,9 +74,13 @@ namespace TiltBrush
                     return;
                 }
 
-                if (m_LastInput == null)
+                if (m_LastInput == Vector3.zero)
                 {
                     m_LastInput = controlPoint;
+                    return;
+                }
+
+                if(Vector3.Distance(m_LastInput, controlPoint)<0.1){
                     return;
                 }
 
@@ -86,7 +101,7 @@ namespace TiltBrush
                 {
                     m_ArcLengthPositions.Add(
                         m_ArcLengthPositions.Last() +
-                        ComputeArcLength(m_ControlPoints.Count - 2));
+                        ComputeArcLength(m_ControlPoints.Count - 3));
                 }
             }
 
@@ -173,7 +188,7 @@ namespace TiltBrush
                         0,
                         0).normalized;
 
-                    return m_ControlPoints[^2] +
+                    return m_ControlPoints[^1] +
                            (l - m_ArcLengthPositions.Last()) * tangent;
                 }
 
@@ -294,7 +309,7 @@ namespace TiltBrush
                 Vector3 p4,
                 float t1,
                 float t2,
-                float threshold = 0.1f)
+                float threshold = 0.001f)
             {
                 Vector3 interpolatedPoint1 =
                     Interpolate(p1, p2, p3, p4, Tension, Continuity, Bias, t1);
@@ -354,6 +369,24 @@ namespace TiltBrush
             /// @brief Finalize the curve, updating arc length information by computing the last segment's length.
             public virtual void Finish()
             {
+                //elasticurve implementation
+                m_ControlPoints.Add(Interpolate(
+                    m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
+                    m_ControlPoints[^1],
+                    m_LastInput,
+                    m_LastInput,
+                    0,
+                    0,
+                    0,
+                    m_Responsiveness));
+
+                if (m_ControlPoints.Count >= 3)
+                {
+                    m_ArcLengthPositions.Add(
+                        m_ArcLengthPositions.Last() +
+                        ComputeArcLength(m_ControlPoints.Count - 3));
+                }
+
                 if (m_ControlPoints.Count < 2)
                 {
                     return;
@@ -368,24 +401,10 @@ namespace TiltBrush
             /// @return True if the curve is finished, otherwise false.
             public bool IsFinished()
             {
-                if (this is BaseCurve)
-                {
-                    Debug.Log(
-                        "BaseCurve is finished" +
-                        (m_ControlPoints.Count >= 2 &&
-                         m_ArcLengthPositions.Count == m_ControlPoints.Count));
-                }
-
-                Debug.Log(
-                    "Curve is finished" +
-                    (m_ControlPoints.Count >= 2 &&
-                     m_ArcLengthPositions.Count == m_ControlPoints.Count) +
-                    "Differenz: " +
-                    (m_ArcLengthPositions.Count - m_ControlPoints.Count));
-
                 return m_ControlPoints.Count >= 2 &&
                        m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
+           
         }
     }
 }

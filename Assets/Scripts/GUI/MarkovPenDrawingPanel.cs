@@ -1,45 +1,47 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace TiltBrush
 {
     /// @brief Provides the drawing panel used by the Markov pen drawing tool
-    /// Handles panel lifetime state, panel alignment, drawing collider raycasts,
+    /// Handles panel lifetime state, drawing collider raycasts,
     /// button raycasts, and panel button actions.
     public class MarkovPenDrawingPanel : BasePanel
     {
-
         private const float k_RaycastMaxDistance = 100.0f;
-        private const float k_MinHorizontalDirectionSqrMagnitude = 0.001f;
 
         private static MarkovPenDrawingPanel s_Instance;
         private static bool s_IsOpen;
 
         [Header("Markov Panel Colliders")]
-        [SerializeField] private Collider m_DrawingCollider;
-        [SerializeField] private Collider m_SaveButtonCollider;
-        [SerializeField] private Collider m_CloseButtonCollider;
+        [SerializeField]
+        private Collider m_DrawingCollider;
+
+        [SerializeField]
+        private Collider m_SaveButtonCollider;
+
+        [SerializeField]
+        private Collider m_CloseButtonCollider;
 
         [Header("Button Hover")]
-        [SerializeField] private Transform m_SaveButtonHoverTarget;
-        [SerializeField] private Transform m_CloseButtonHoverTarget;
-        [SerializeField] private float m_HoverScale = 1.1f;
+        [SerializeField]
+        private Transform m_SaveButtonHoverTarget;
 
-        [Header("Panel Alignment")]
-        [FormerlySerializedAs("m_ForceStraightRotation")]
-        [SerializeField] private bool m_IsStraightRotationForced = true;
-        [SerializeField] private Vector3 m_StraightEulerRotation = Vector3.zero;
+        [SerializeField]
+        private Transform m_CloseButtonHoverTarget;
 
-        [Header("Panel Placement")]
-        [SerializeField] private float m_DistanceFromUser = 1.75f;
-        [SerializeField] private float m_HeightOffsetFromHead = -0.1f;
-        [SerializeField] private float m_SizeMultiplier = 0.85f;
+        [SerializeField]
+        private float m_HoverScale = 1.1f;
+
+        [Header("Panel Scale")]
+        [SerializeField]
+        private float m_SizeMultiplier = 0.85f;
 
         private Vector3 m_InitialLocalScale;
         private Collider m_HoveredButton;
         private Vector3 m_SaveButtonBaseScale;
         private Vector3 m_CloseButtonBaseScale;
+        private bool m_IsSaved;
 
         /// @brief Get the active Markov drawing panel instance
         public static MarkovPenDrawingPanel Instance
@@ -109,11 +111,10 @@ namespace TiltBrush
 
             MarkovPenSketchMemoryScript.BeginMarkovStrokeCapture();
 
-            PositionPanelInFrontOfUser();
             ApplyPanelScale();
-            FaceUserButStayUpright();
 
             MarkovPenDrawingFreepaint.OnPanelOpened();
+            m_IsSaved = false;
         }
 
         /// @brief Deactivate the panel and resets the Markov drawing tool state
@@ -127,39 +128,21 @@ namespace TiltBrush
             MarkovPenSketchMemoryScript.EndMarkovStrokeCapture();
             MarkovPenDrawingFreepaint.OnPanelClosed();
 
-        }
-
-        /// @brief Position the panel in front of the user's head at the configured distance
-        private void PositionPanelInFrontOfUser()
-        {
-            Transform headTransform = ViewpointScript.Head;
-
-            if (headTransform == null)
+            List<Vector3> baseCurvePoints = MarkovPenDrawingFreepaint.BaseCurvePoints;
+            List<Vector3> styleCurvePoints = MarkovPenDrawingFreepaint.StyleCurvePoints;
+            if (m_IsSaved)
             {
-                return;
+                MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
+                SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.MarkovPenTool);
             }
-
-            Vector3 horizontalForward = headTransform.forward;
-            horizontalForward.y = 0.0f;
-
-            if (horizontalForward.sqrMagnitude < k_MinHorizontalDirectionSqrMagnitude)
+            else
             {
-                horizontalForward = transform.forward;
-                horizontalForward.y = 0.0f;
+                if (baseCurvePoints.Count > 0 && styleCurvePoints.Count > 0)
+                {
+                    MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
+                    SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.MarkovPenTool);
+                }
             }
-
-            if (horizontalForward.sqrMagnitude < k_MinHorizontalDirectionSqrMagnitude)
-            {
-                return;
-            }
-
-            horizontalForward.Normalize();
-
-            Vector3 targetPosition =
-                headTransform.position + horizontalForward * m_DistanceFromUser;
-            targetPosition.y = headTransform.position.y + m_HeightOffsetFromHead;
-
-            transform.position = targetPosition;
         }
 
         /// @brief Set the currently hovered panel button and updates its visual state
@@ -216,7 +199,6 @@ namespace TiltBrush
 
             worldPoint = raycastHit.point;
 
-            //Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
             Vector3 panelSpacePoint =
                 Quaternion.Inverse(transform.rotation) * (worldPoint - transform.position);
             point2D = new Vector2(panelSpacePoint.x, panelSpacePoint.y);
@@ -310,35 +292,6 @@ namespace TiltBrush
             transform.localScale = m_InitialLocalScale * m_SizeMultiplier;
         }
 
-        /// @brief Face the user horizontally while keeping the panel upright
-        private void FaceUserButStayUpright()
-        {
-            Transform headTransform = ViewpointScript.Head;
-
-            if (headTransform == null)
-            {
-                return;
-            }
-
-            Vector3 horizontalDirection = transform.position - headTransform.position;
-            horizontalDirection.y = 0.0f;
-
-            if (horizontalDirection.sqrMagnitude < k_MinHorizontalDirectionSqrMagnitude)
-            {
-                return;
-            }
-
-            if (m_IsStraightRotationForced)
-            {
-                transform.rotation = Quaternion.Euler(m_StraightEulerRotation);
-                return;
-            }
-
-            transform.rotation = Quaternion.LookRotation(
-                horizontalDirection.normalized,
-                Vector3.up);
-        }
-
         /// @brief Handle a press on a Markov drawing panel button
         /// @param buttonCollider The collider of the pressed button.
         public void OnButtonPressed(Collider buttonCollider)
@@ -348,11 +301,14 @@ namespace TiltBrush
             {
                 return;
             }
-
+            s_IsOpen = false;
             if (buttonCollider == m_CloseButtonCollider)
             {
                 MarkovPenDrawingFreepaint.RestorePaintPointListsFromBackup();
-
+            }
+            else if (buttonCollider == m_SaveButtonCollider)
+            {
+                m_IsSaved = true;
             }
 
             if (PointerManager.m_Instance != null)

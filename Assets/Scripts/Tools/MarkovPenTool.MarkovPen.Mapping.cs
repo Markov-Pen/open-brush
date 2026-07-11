@@ -27,7 +27,7 @@ namespace TiltBrush
         public class Mapping
         {
             //Curves
-            public BaseCurve BaseCurve { get; private set; }
+            public BasePath BaseCurve { get; private set; }
 
             private Curve m_StyleCurve;
 
@@ -37,12 +37,12 @@ namespace TiltBrush
             private float m_SamplingInterval = k_SamplingInterval;
 
             //Mapping
-            private List<Vector2> m_Mapping = new List<Vector2>();
+            private List<Vector2> m_Mapping = new();
 
             //Offsets
             private List<float> m_OffsetsAlongCurve;
 
-            private float m_MaxOffset = 0f;
+            private float m_MaxOffset;
 
             public int LastIndex { get; private set; }
 
@@ -50,10 +50,9 @@ namespace TiltBrush
             /// @param styleCurve The style curve for the mapping.
             /// @param baseCurve The base curve for the mapping.
             /// @exception NullReferenceException Thrown if styleCurve or baseCurve is null.
-            public Mapping(Curve styleCurve, BaseCurve baseCurve)
+            public Mapping(BasePath baseCurve, Curve styleCurve)
             {
-                Debug.Log("ENter");
-
+                Debug.Log("MarkovPen: compute Mapping");
                 LastIndex = -1;
 
                 if (styleCurve == null)
@@ -66,8 +65,6 @@ namespace TiltBrush
                     throw new NullReferenceException("BaseCurve must not be null");
                 }
 
-                Debug.Log("ENter2");
-
                 BaseCurve = baseCurve;
                 m_StyleCurve = styleCurve;
 
@@ -76,11 +73,9 @@ namespace TiltBrush
                     return;
                 }
 
-                Debug.Log("ENter3");
-
                 //compute sampling interval
                 float samplingInterval = ComputeSamplingInterval();
-
+                Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
                 //sample style curve
                 List<Vector3> samples = SampleStyleCurveUniformly(samplingInterval);
 
@@ -92,9 +87,19 @@ namespace TiltBrush
 
                 //compute maximum offset
                 ComputeMaxOffset();
-
+                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + MaxOffset);
+                
                 //compute offsets
                 ComputeOffsets();
+                Debug.Log("MarkovPen: Mapping size: " + m_Mapping.Count);
+            }
+
+            public Mapping()
+            {
+                LastIndex = -1;
+                BaseCurve = new BasePath();
+                m_StyleCurve = new Curve();
+
             }
 
             /// @brief Sample the style curve uniformly based on the given sampling interval.
@@ -121,11 +126,12 @@ namespace TiltBrush
             public List<float> Project(List<Vector3> samples)
             {
                 List<float> projections = new List<float>();
-
+                
                 foreach (var sample in samples)
                 {
                     float projection = BaseCurve.Project(sample)[0];
                     projections.Add(projection);
+
                 }
 
                 return projections;
@@ -165,10 +171,9 @@ namespace TiltBrush
                         offsetAlongNormal *= -1;
                     }
 
-                    // Debug.Log("association: " + new Vector2(projections[i], offset));
-
                     m_Mapping.Add(
                         new Vector2(projections[i], offsetAlongNormal));
+                        
                 }
             }
 
@@ -199,6 +204,8 @@ namespace TiltBrush
 
                 if (IsRepetitive())
                 {
+                    Debug.Log("MarkovPen: Mapping is repetitive");
+
                     m_OffsetsAlongCurve.Insert(
                         0,
                         m_OffsetsAlongCurve.Last());
@@ -216,7 +223,7 @@ namespace TiltBrush
             {
                 if (IsEmpty()) ;
 
-                BaseCurve.SetTap(offset);
+                BaseCurve.Tap = offset;
 
                 //_maxOffset = offset;
             }

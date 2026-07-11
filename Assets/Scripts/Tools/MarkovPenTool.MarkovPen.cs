@@ -13,7 +13,6 @@
 // limitations under the License.
 using System;
 using System.Collections.Generic;
-using System.Data;
 using UnityEngine;
 
 namespace TiltBrush
@@ -22,17 +21,32 @@ namespace TiltBrush
     /// @brief The Markov Pen is a technique for generating character styles.
     ///
     /// This class serves as the base for other partial classes and derives from MarkovPenTool.
-    public partial class MarkovPen : MarkovPenTool
+    public partial class MarkovPen 
     {
         private Mapping m_ExampleMapping;
-        private Mapping m_TargetMapping;
+        private Mapping m_TargetMapping = new();
         private Synthesizer m_Synthesizer;
 
         private Curve m_ExampleStyleCurve;
         private Curve m_TargetStyleCurve;
 
-        private BaseCurve m_ExampleBaseCurve;
-        private BaseCurve m_TargetBaseCurve;
+        private BasePath m_ExampleBaseCurve;
+        private BasePath m_TargetBaseCurve;
+
+        /// @brief Constuct a MarkovPen instance
+        /// 
+        /// @param basePathControlPoints - Control Points of the Base Path
+        /// @param styleCurveControlPoints - Control points of the Style Curve 
+        public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
+        {
+            BasePath basePath = new BasePath(basePathControlPoints);
+            Debug.Log("MarkovPen: Arclength of example base path: " + basePath.ArcLength());
+            Curve styleCurve = new Curve(styleCurveControlPoints);
+            Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
+
+            m_ExampleMapping = new Mapping(basePath, styleCurve);
+            m_Synthesizer = new Synthesizer(m_ExampleMapping);
+        }
 
         /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
         /// @param exampleMapping A Mapping computed from the example curves.
@@ -40,20 +54,26 @@ namespace TiltBrush
         {
             m_ExampleMapping = exampleMapping;
 
-            Debug.Log("mapping " + m_ExampleMapping.IsEmpty());
-
             m_Synthesizer = new Synthesizer(m_ExampleMapping);
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
         /// @param targetMapping A Mapping representing the growing target base curve and an empty target style curve.
         /// @return A list of reconstructed point pairs on the target curve.
-        public List<Tuple<Vector3, Vector3>> Reconstruct(Mapping targetMapping)
+        public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
-            List<Tuple<Vector3, Vector3>> result =
-                m_Synthesizer.Reconstruct(targetMapping);
+            // Debug.Log("MarkovPen: Up vector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
+            m_TargetMapping.BaseCurve.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
+        
+            return m_Synthesizer.Reconstruct(m_TargetMapping);
+        }
 
-            return result;
+        /// @brief Discard the current target curve so the next stroke starts fresh.
+        ///
+        /// Called on trigger-down to reset the growing target base/style curve between strokes.
+        public void NewLine()
+        {
+            m_TargetMapping = new Mapping();
         }
 
         /// @brief Checks whether the MarkovPen is trained (example mapping present).

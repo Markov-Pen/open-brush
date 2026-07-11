@@ -9,13 +9,14 @@ namespace TiltBrush
     /// pointer state while the drawing panel is active.
     public class MarkovPenDrawingFreepaint : FreePaintTool
     {
-
         private const float k_MinDirectionIndicatorLength = 0.001f;
+        private const float k_MinDirectionIndicatorLengthSquared =
+            k_MinDirectionIndicatorLength * k_MinDirectionIndicatorLength;
         private const string k_GuideLineObjectName = "GuideLine";
 
         [SerializeField] private LineRenderer m_DirectionIndicator;
-        [SerializeField] private float m_DirectionIndicatorPanelOffset = 0.03f;
-        [SerializeField] private float m_DirectionIndicatorControllerOffset = 0.02f;
+        [SerializeField, Min(0.0f)] private float m_DirectionIndicatorPanelOffset = 0.03f;
+        [SerializeField, Min(0.0f)] private float m_DirectionIndicatorControllerOffset = 0.02f;
 
         private static readonly List<Vector3> s_ControlPoints = new();
         private static readonly List<Vector3> s_BaseCurvePoints = new();
@@ -42,10 +43,10 @@ namespace TiltBrush
         public static IReadOnlyList<Vector3> ControlPoints => s_ControlPoints;
 
         /// @brief Get all active points belonging to the base curve
-        public static IReadOnlyList<Vector3> BaseCurvePoints => s_BaseCurvePoints;
+        public static List<Vector3> BaseCurvePoints => s_BaseCurvePoints;
 
         /// @brief Get all active points belonging to the style curve
-        public static IReadOnlyList<Vector3> StyleCurvePoints => s_StyleCurvePoints;
+        public static List<Vector3> StyleCurvePoints => s_StyleCurvePoints;
 
         /// @brief Get the backed-up drawing points from the last saved Markov drawing
         public static IReadOnlyList<Vector3> BackupControlPoints => s_BackupControlPoints;
@@ -66,12 +67,9 @@ namespace TiltBrush
         /// @return The parsed color, or white if parsing fails.
         private static Color ParseHexColor(string hexColorString)
         {
-            if (ColorUtility.TryParseHtmlString(hexColorString, out Color parsedColor))
-            {
-                return parsedColor;
-            }
-
-            return Color.white;
+            return ColorUtility.TryParseHtmlString(hexColorString, out Color parsedColor)
+                ? parsedColor
+                : Color.white;
         }
 
         /// @brief Update the direction indicator between the controller and drawing panel
@@ -86,28 +84,21 @@ namespace TiltBrush
             MarkovPenDrawingPanel drawingPanel = MarkovPenDrawingPanel.Instance;
 
             if (drawingPanel == null ||
-                !drawingPanel.TryGetClosestPanelPoint(ray, out Vector3 panelHitPoint))
-            {
-                SetDirectionIndicatorActive(false);
-                return;
-            }
-
-            if (ray.direction.sqrMagnitude < k_MinDirectionIndicatorLength)
+                !drawingPanel.TryGetClosestPanelPoint(ray, out Vector3 panelHitPoint) ||
+                ray.direction.sqrMagnitude < k_MinDirectionIndicatorLengthSquared)
             {
                 SetDirectionIndicatorActive(false);
                 return;
             }
 
             Vector3 normalizedDirection = ray.direction.normalized;
-            Vector3 startPoint =
-                ray.origin + normalizedDirection * m_DirectionIndicatorControllerOffset;
+            float controllerOffset = Mathf.Max(0.0f, m_DirectionIndicatorControllerOffset);
+            float panelOffset = Mathf.Max(0.0f, m_DirectionIndicatorPanelOffset);
+
+            Vector3 startPoint = ray.origin + normalizedDirection * controllerOffset;
 
             float hitDistance = Vector3.Distance(ray.origin, panelHitPoint);
-            float lineLength = Mathf.Max(
-                0.0f,
-                hitDistance -
-                m_DirectionIndicatorControllerOffset -
-                m_DirectionIndicatorPanelOffset);
+            float lineLength = hitDistance - controllerOffset - panelOffset;
 
             if (lineLength <= k_MinDirectionIndicatorLength)
             {
@@ -138,7 +129,6 @@ namespace TiltBrush
         /// @brief Update the tool and redirects painting input to the Markov drawing panel
         public override void UpdateTool()
         {
-
             base.UpdateTool();
 
             if (!IsDrawingPanelOpen)
@@ -155,14 +145,7 @@ namespace TiltBrush
         public static void OnPanelOpened()
         {
             ClearPaintPointLists();
-
-            s_WasButtonPressed = false;
-            s_IsWaitingForFirstTriggerRelease = true;
-            s_IsBaseCurveDone = false;
-            s_IsStyleCurveDone = false;
-            s_HasBaseCurveStrokeStarted = false;
-            s_HasStyleCurveStrokeStarted = false;
-            s_HasSavedPointerColor = false;
+            ResetInteractionState(waitForFirstTriggerRelease: true);
 
             SetGuideLinesActive(false);
             ResetPointer();
@@ -171,23 +154,17 @@ namespace TiltBrush
         /// @brief Copy the active point lists into the backup point lists
         public static void BackupPaintPointLists()
         {
-            s_BackupControlPoints.Clear();
-            s_BackupBaseCurvePoints.Clear();
-            s_BackupStyleCurvePoints.Clear();
-
-            s_BackupControlPoints.AddRange(s_ControlPoints);
-            s_BackupBaseCurvePoints.AddRange(s_BaseCurvePoints);
-            s_BackupStyleCurvePoints.AddRange(s_StyleCurvePoints);
+            CopyPoints(s_ControlPoints, s_BackupControlPoints);
+            CopyPoints(s_BaseCurvePoints, s_BackupBaseCurvePoints);
+            CopyPoints(s_StyleCurvePoints, s_BackupStyleCurvePoints);
         }
 
         /// @brief Restore the active point lists from the backup point lists
         public static void RestorePaintPointListsFromBackup()
         {
-            ClearPaintPointLists();
-
-            s_ControlPoints.AddRange(s_BackupControlPoints);
-            s_BaseCurvePoints.AddRange(s_BackupBaseCurvePoints);
-            s_StyleCurvePoints.AddRange(s_BackupStyleCurvePoints);
+            CopyPoints(s_BackupControlPoints, s_ControlPoints);
+            CopyPoints(s_BackupBaseCurvePoints, s_BaseCurvePoints);
+            CopyPoints(s_BackupStyleCurvePoints, s_StyleCurvePoints);
         }
 
         /// @brief Clear all active points stored for the Markov drawing panel
@@ -203,17 +180,26 @@ namespace TiltBrush
         public static void OnPanelClosed()
         {
             RestorePointerColorIfNeeded();
+            ResetInteractionState(waitForFirstTriggerRelease: false);
 
+            SetGuideLinesActive(true);
+            ResetPointer();
+        }
+
+        private static void ResetInteractionState(bool waitForFirstTriggerRelease)
+        {
             s_WasButtonPressed = false;
-            s_IsWaitingForFirstTriggerRelease = false;
+            s_IsWaitingForFirstTriggerRelease = waitForFirstTriggerRelease;
             s_IsBaseCurveDone = false;
             s_IsStyleCurveDone = false;
             s_HasBaseCurveStrokeStarted = false;
             s_HasStyleCurveStrokeStarted = false;
+        }
 
-            SetGuideLinesActive(true);
-            ResetPointer();
-
+        private static void CopyPoints(List<Vector3> source, List<Vector3> destination)
+        {
+            destination.Clear();
+            destination.AddRange(source);
         }
 
         /// @brief Enable or disable all scene guide lines
@@ -244,38 +230,44 @@ namespace TiltBrush
         /// @brief Reset pointer state and stops any active line drawing
         private static void ResetPointer()
         {
-            if (PointerManager.m_Instance == null)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null)
             {
                 return;
             }
 
-            PointerManager.m_Instance.StraightEdgeModeEnabled = false;
-            PointerManager.m_Instance.EnableLine(false);
-            PointerManager.m_Instance.PointerPressure = 0.0f;
-            PointerManager.m_Instance.EatLineEnabledInput();
+            pointerManager.StraightEdgeModeEnabled = false;
+            pointerManager.EnableLine(false);
+            pointerManager.PointerPressure = 0.0f;
+            pointerManager.EatLineEnabledInput();
         }
 
         /// @brief Save the pointer color before Markov drawing changes it
         private static void SavePointerColorIfNeeded()
         {
-            if (PointerManager.m_Instance == null || s_HasSavedPointerColor)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null || s_HasSavedPointerColor)
             {
                 return;
             }
 
-            s_PointerColorBeforeMarkovDrawing = PointerManager.m_Instance.PointerColor;
+            s_PointerColorBeforeMarkovDrawing = pointerManager.PointerColor;
             s_HasSavedPointerColor = true;
         }
 
         /// @brief Restore the pointer color active before Markov drawing started
         private static void RestorePointerColorIfNeeded()
         {
-            if (PointerManager.m_Instance == null || !s_HasSavedPointerColor)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null || !s_HasSavedPointerColor)
             {
                 return;
             }
 
-            PointerManager.m_Instance.PointerColor = s_PointerColorBeforeMarkovDrawing;
+            pointerManager.PointerColor = s_PointerColorBeforeMarkovDrawing;
             s_HasSavedPointerColor = false;
         }
 
@@ -283,27 +275,32 @@ namespace TiltBrush
         /// @param color The color to apply to the pointer.
         private static void SetPointerColor(Color color)
         {
-            if (PointerManager.m_Instance == null)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null)
             {
                 return;
             }
 
             SavePointerColorIfNeeded();
-            PointerManager.m_Instance.PointerColor = color;
+            pointerManager.PointerColor = color;
         }
 
         /// @brief Enable or disable drawing on the pointer
         /// @param isActive True when drawing should be active.
         private void SetDrawingActive(bool isActive)
         {
-            if (PointerManager.m_Instance == null)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null)
             {
                 return;
             }
 
-            PointerManager.m_Instance.EnableLine(isActive);
-            PointerManager.m_Instance.PointerPressure =
-                isActive ? m_brushTriggerRatio : 0.0f;
+            pointerManager.EnableLine(isActive);
+            pointerManager.PointerPressure = isActive
+                ? Mathf.Clamp01(m_brushTriggerRatio)
+                : 0.0f;
         }
 
         /// @brief Update the active curve state
@@ -311,35 +308,38 @@ namespace TiltBrush
         /// @param isPaintingActive True when the user is painting on the drawing panel.
         private void UpdateCurveState(bool isPaintingActive)
         {
-            if (PointerManager.m_Instance == null)
+            PointerManager pointerManager = PointerManager.m_Instance;
+
+            if (pointerManager == null)
             {
                 return;
             }
 
             if (s_IsStyleCurveDone)
             {
-                PointerManager.m_Instance.StraightEdgeModeEnabled = false;
+                pointerManager.StraightEdgeModeEnabled = false;
                 return;
             }
 
             if (!s_IsBaseCurveDone)
             {
-                UpdateBaseCurveState(isPaintingActive);
+                UpdateBaseCurveState(pointerManager, isPaintingActive);
                 return;
             }
 
-            UpdateStyleCurveState(isPaintingActive);
+            UpdateStyleCurveState(pointerManager, isPaintingActive);
         }
 
         /// @brief Update the base curve stroke state
+        /// @param pointerManager The active pointer manager.
         /// @param isPaintingActive True when the user is painting on the drawing panel.
-        private void UpdateBaseCurveState(bool isPaintingActive)
+        private void UpdateBaseCurveState(PointerManager pointerManager, bool isPaintingActive)
         {
             if (isPaintingActive)
             {
                 s_HasBaseCurveStrokeStarted = true;
 
-                PointerManager.m_Instance.StraightEdgeModeEnabled = true;
+                pointerManager.StraightEdgeModeEnabled = true;
                 SetPointerColor(s_BaseCurveColor);
             }
 
@@ -348,21 +348,22 @@ namespace TiltBrush
                 s_IsBaseCurveDone = true;
                 s_HasBaseCurveStrokeStarted = false;
 
-                PointerManager.m_Instance.StraightEdgeModeEnabled = false;
-                PointerManager.m_Instance.EatLineEnabledInput();
+                pointerManager.StraightEdgeModeEnabled = false;
+                pointerManager.EatLineEnabledInput();
             }
 
             if (s_IsBaseCurveDone)
             {
-                PointerManager.m_Instance.StraightEdgeModeEnabled = false;
+                pointerManager.StraightEdgeModeEnabled = false;
             }
         }
 
         /// @brief Update the style curve stroke state
+        /// @param pointerManager The active pointer manager.
         /// @param isPaintingActive True when the user is painting on the drawing panel.
-        private void UpdateStyleCurveState(bool isPaintingActive)
+        private void UpdateStyleCurveState(PointerManager pointerManager, bool isPaintingActive)
         {
-            PointerManager.m_Instance.StraightEdgeModeEnabled = false;
+            pointerManager.StraightEdgeModeEnabled = false;
 
             if (isPaintingActive)
             {
@@ -372,21 +373,29 @@ namespace TiltBrush
 
             if (s_HasStyleCurveStrokeStarted && !m_brushTrigger)
             {
-                s_IsStyleCurveDone = true;
-                s_HasStyleCurveStrokeStarted = false;
-
-                PointerManager.m_Instance.EnableLine(false);
-                PointerManager.m_Instance.PointerPressure = 0.0f;
-                PointerManager.m_Instance.EatLineEnabledInput();
-
-                RestorePointerColorIfNeeded();
+                FinishStyleCurve(pointerManager);
             }
         }
 
-        /// @brief Save a drawn point and assigns it to the active curve
-        /// @param point The world-space point drawn on the Markov drawing panel.
-        private void SavePaintPoint(Vector3 point)
+        /// @brief Finish the style curve stroke and restore normal pointer state
+        /// @param pointerManager The active pointer manager.
+        private static void FinishStyleCurve(PointerManager pointerManager)
         {
+            s_IsStyleCurveDone = true;
+            s_HasStyleCurveStrokeStarted = false;
+
+            pointerManager.EnableLine(false);
+            pointerManager.PointerPressure = 0.0f;
+            pointerManager.EatLineEnabledInput();
+
+            RestorePointerColorIfNeeded();
+        }
+
+        /// @brief Save a drawn point and assigns it to the active curve
+        /// @param panelPoint The panel-space point drawn on the Markov drawing panel.
+        private static void SavePaintPoint(Vector2 panelPoint)
+        {
+            Vector3 point = panelPoint;
             s_ControlPoints.Add(point);
 
             if (!s_IsBaseCurveDone)
@@ -419,8 +428,7 @@ namespace TiltBrush
                 return;
             }
 
-            Transform attachTransform =
-                inputManager.GetBrushControllerAttachPoint();
+            Transform attachTransform = inputManager.GetBrushControllerAttachPoint();
 
             if (attachTransform == null)
             {
@@ -434,16 +442,7 @@ namespace TiltBrush
 
             if (s_IsWaitingForFirstTriggerRelease)
             {
-                SetDrawingActive(false);
-                UpdateCurveState(false);
-
-                if (!m_brushTrigger)
-                {
-                    s_IsWaitingForFirstTriggerRelease = false;
-                    s_WasButtonPressed = false;
-                    ResetPointer();
-                }
-
+                HandleInitialTriggerRelease();
                 return;
             }
 
@@ -454,43 +453,7 @@ namespace TiltBrush
 
             if (buttonCollider != null)
             {
-                pointerManager.SetPointerTransform(
-                    InputManager.ControllerName.Brush,
-                    buttonWorldPoint,
-                    drawingPanel.transform.rotation);
-
-                SetDrawingActive(false);
-                UpdateCurveState(false);
-
-                bool isCloseButtonPressed =
-                    buttonCollider == drawingPanel.CloseButtonCollider;
-
-                bool isSaveButtonPressed =
-                    buttonCollider == drawingPanel.SaveButtonCollider;
-
-                bool isButtonPressAllowed =
-                    isCloseButtonPressed ||
-                    (isSaveButtonPressed && s_IsStyleCurveDone);
-
-                if (m_brushTrigger &&
-                    !s_WasButtonPressed &&
-                    isButtonPressAllowed)
-                {
-                    s_WasButtonPressed = true;
-
-                    if (isSaveButtonPressed)
-                    {
-                        BackupPaintPointLists();
-                    }
-
-                    drawingPanel.OnButtonPressed(buttonCollider);
-                }
-
-                if (!m_brushTrigger)
-                {
-                    s_WasButtonPressed = false;
-                }
-
+                HandleButtonHover(drawingPanel, pointerManager, buttonCollider, buttonWorldPoint);
                 return;
             }
 
@@ -504,6 +467,11 @@ namespace TiltBrush
                 out Vector2 panelPoint,
                 out Vector3 drawingWorldPoint))
             {
+                if (s_HasStyleCurveStrokeStarted)
+                {
+                    FinishStyleCurve(pointerManager);
+                }
+
                 SetDrawingActive(false);
                 UpdateCurveState(false);
                 return;
@@ -514,22 +482,11 @@ namespace TiltBrush
                 drawingWorldPoint,
                 drawingPanel.transform.rotation);
 
-            App application = App.Instance;
-            MultiplayerManager multiplayerManager = MultiplayerManager.m_Instance;
-
-            bool isPaintingAllowed =
-                application != null &&
-                application.IsInStateThatAllowsPainting();
-
-            bool isViewOnly =
-                multiplayerManager != null &&
-                multiplayerManager.IsViewOnly;
-
             bool isPaintingActive =
                 m_brushTrigger &&
                 !s_IsStyleCurveDone &&
-                isPaintingAllowed &&
-                !isViewOnly;
+                IsApplicationPaintingAllowed() &&
+                !IsViewOnlyMultiplayer();
 
             UpdateCurveState(isPaintingActive);
             SetDrawingActive(isPaintingActive);
@@ -538,6 +495,76 @@ namespace TiltBrush
             {
                 SavePaintPoint(panelPoint);
             }
+        }
+
+        private void HandleInitialTriggerRelease()
+        {
+            SetDrawingActive(false);
+            UpdateCurveState(false);
+
+            if (m_brushTrigger)
+            {
+                return;
+            }
+
+            s_IsWaitingForFirstTriggerRelease = false;
+            s_WasButtonPressed = false;
+            ResetPointer();
+        }
+
+        private void HandleButtonHover(
+            MarkovPenDrawingPanel drawingPanel,
+            PointerManager pointerManager,
+            Collider buttonCollider,
+            Vector3 buttonWorldPoint)
+        {
+            pointerManager.SetPointerTransform(
+                InputManager.ControllerName.Brush,
+                buttonWorldPoint,
+                drawingPanel.transform.rotation);
+
+            SetDrawingActive(false);
+            UpdateCurveState(false);
+
+            if (m_brushTrigger && !s_WasButtonPressed && IsButtonPressAllowed(drawingPanel, buttonCollider))
+            {
+                s_WasButtonPressed = true;
+
+                if (buttonCollider == drawingPanel.SaveButtonCollider)
+                {
+                    BackupPaintPointLists();
+                }
+
+                drawingPanel.OnButtonPressed(buttonCollider);
+            }
+
+            if (!m_brushTrigger)
+            {
+                s_WasButtonPressed = false;
+            }
+        }
+
+        private static bool IsButtonPressAllowed(
+            MarkovPenDrawingPanel drawingPanel,
+            Collider buttonCollider)
+        {
+            bool isCloseButtonPressed = buttonCollider == drawingPanel.CloseButtonCollider;
+            bool isSaveButtonPressed = buttonCollider == drawingPanel.SaveButtonCollider;
+
+            return isCloseButtonPressed ||
+                (isSaveButtonPressed && s_IsStyleCurveDone);
+        }
+
+        private static bool IsApplicationPaintingAllowed()
+        {
+            App application = App.Instance;
+            return application != null && application.IsInStateThatAllowsPainting();
+        }
+
+        private static bool IsViewOnlyMultiplayer()
+        {
+            MultiplayerManager multiplayerManager = MultiplayerManager.m_Instance;
+            return multiplayerManager != null && multiplayerManager.IsViewOnly;
         }
     }
 }
