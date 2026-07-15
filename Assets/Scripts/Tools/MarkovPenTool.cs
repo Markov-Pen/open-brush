@@ -19,7 +19,6 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-
     /// @brief Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
     ///        Until the Markov synthesis is implemented every method delegates to FreePaintTool,
     ///        so the tool behaves identically to plain free-hand drawing.

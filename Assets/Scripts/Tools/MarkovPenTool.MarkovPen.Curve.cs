@@ -88,7 +88,7 @@ namespace TiltBrush
                 m_ControlPoints.Add(Interpolate(
                     m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
                     m_ControlPoints[^1],
-                    (Vector3)m_LastInput,
+                    m_LastInput,
                     controlPoint,
                     m_Responsiveness));
 
@@ -230,9 +230,6 @@ namespace TiltBrush
             /// @param point2 Second control point.
             /// @param point3 Third control point.
             /// @param point4 Fourth control point.
-            /// @param tension Tension factor for interpolation.
-            /// @param continuity Continuity factor for interpolation.
-            /// @param bias Bias factor for interpolation.
             /// @param t The parameter value for interpolation.
             /// @return The interpolated Vector3 position on the curve.
             public Vector3 Interpolate(
@@ -246,7 +243,8 @@ namespace TiltBrush
                 {
                     return point2;
                 }
-                else if (t >= 1f)
+                
+                if (t >= 1f)
                 {
                     return point3;
                 }

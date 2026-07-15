@@ -109,8 +109,7 @@ namespace TiltBrush
 
                 Vector3 smoothTangent = Vector3.zero;
 
-                for (
-                    float length = center - Tap;
+                for (float length = center - Tap;
                     length <= center + Tap;
                     length += (1.0f / windowSize))
                 {
@@ -140,9 +139,6 @@ namespace TiltBrush
             /// @param point2 The second control point of the spline.
             /// @param point3 The third control point of the spline.
             /// @param point4 The fourth control point of the spline.
-            /// @param tension Tension parameter affecting the shape of the spline.
-            /// @param continuity Continuity parameter affecting the smoothness of the spline.
-            /// @param bias Bias parameter affecting the directionality of the spline.
             /// @param t The parameter at which to evaluate the first derivative (range [0,1]).
             /// @return The first derivative of the spline at parameter t.
             public static Vector3 EvaluateFirstDerivative(
@@ -156,7 +152,8 @@ namespace TiltBrush
                 {
                     return point2;
                 }
-                else if (t >= 1f)
+                
+                if (t >= 1f)
                 {
                     return point3;
                 }
@@ -281,39 +278,32 @@ namespace TiltBrush
             /// @return The computed tangent vector at the specified arc length.
             public Vector3 FirstDerivativeAt(float l)
             {
-                Vector3 firstDerivative;
-
                 if (l <= 0)
                 {
-                    firstDerivative =
-                        ComputeTangent(
-                            m_ControlPoints[0],
-                            m_ControlPoints[0],
-                            m_ControlPoints[1]);
+                    return ComputeTangent(
+                        m_ControlPoints[0],
+                        m_ControlPoints[0],
+                        m_ControlPoints[1]);
                 }
-                else if (l >= m_ArcLengthPositions.Last())
+                
+                if (l >= m_ArcLengthPositions.Last())
                 {
-                    firstDerivative =
-                        ComputeTangent(
-                            m_ControlPoints[m_ControlPoints.Count - 2],
-                            m_ControlPoints[m_ControlPoints.Count - 1],
-                            m_ControlPoints[m_ControlPoints.Count - 1]);
-                }
-                else
-                {
-                    float t = TimeAt(l);
-
-                    Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
-
-                    firstDerivative = EvaluateFirstDerivative(
-                        segment[0],
-                        segment[1],
-                        segment[2],
-                        segment[3],
-                        SegmentT(t));
+                    return ComputeTangent(
+                        m_ControlPoints[m_ControlPoints.Count - 2],
+                        m_ControlPoints[m_ControlPoints.Count - 1],
+                        m_ControlPoints[m_ControlPoints.Count - 1]);
                 }
 
-                return firstDerivative;
+                float t = TimeAt(l);
+
+                Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
+
+                return EvaluateFirstDerivative(
+                    segment[0],
+                    segment[1],
+                    segment[2],
+                    segment[3],
+                    SegmentT(t));
             }
 
             /// @brief Project a point onto the curve and return the arc length positions of the projections.
