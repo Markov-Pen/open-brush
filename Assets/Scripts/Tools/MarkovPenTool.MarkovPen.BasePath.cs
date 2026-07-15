@@ -46,7 +46,7 @@ namespace TiltBrush
 
             /// @brief Construct an exmple base path
             ///
-            /// @params List<Vector3> controlPoints - control points forming base path
+            /// @params List<Vector3> controlPoints - control points forming base path in OpenBrush
             public BasePath(List<Vector3> controlPoints)
             {
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
@@ -141,28 +141,10 @@ namespace TiltBrush
             /// @param point4 The fourth control point of the spline.
             /// @param t The parameter at which to evaluate the first derivative (range [0,1]).
             /// @return The first derivative of the spline at parameter t.
-            public static Vector3 EvaluateFirstDerivative(
-                Vector3 point1,
-                Vector3 point2,
-                Vector3 point3,
-                Vector3 point4,
-                float t)
+            public static Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
             {
-                if (t <= 0f)
-                {
-                    return point2;
-                }
-                
-                if (t >= 1f)
-                {
-                    return point3;
-                }
 
-                Vector3 tangent2 =
-                    ComputeTangent(point1, point2, point3);
-
-                Vector3 tangent3 =
-                    ComputeTangent(point2, point3, point4);
+                (Vector3, Vector3) tangents =  ComputeTangentsAtEndpoints(segment);
 
                 float h1 = (float)(6 * Math.Pow(t, 2) - 6 * Math.Pow(t, 1));
                 float h2 = (float)((-6) * Math.Pow(t, 2) + 6 * Math.Pow(t, 1));
@@ -170,10 +152,10 @@ namespace TiltBrush
                 float h4 = (float)(3 * Math.Pow(t, 2) - 2 * Math.Pow(t, 1));
 
                 Vector3 newPoint =
-                    h1 * point2 +
-                    h2 * point3 +
-                    h3 * tangent2 +
-                    h4 * tangent3;
+                    h1 * segment[1] +
+                    h2 * segment[2] +
+                    h3 * tangents.Item1 +
+                    h4 * tangents.Item2;
 
                 return newPoint;
             }
@@ -210,19 +192,19 @@ namespace TiltBrush
 
                     if (index >= 0 && index + 2 <= m_SmoothNormals.Count)
                     {
-                        normal = Interpolate(
-                            index == 0
-                                ? m_SmoothNormals[0]
-                                : m_SmoothNormals[index - 1].normalized,
-
+                        Vector3[] segment =
+                        {
+                            index == 0 ?
+                                m_SmoothNormals[0] :
+                                m_SmoothNormals[index - 1].normalized,
                             m_SmoothNormals[index].normalized,
-
                             m_SmoothNormals[index + 1].normalized,
+                            index == m_SmoothNormals.Count - 2 ?
+                                m_SmoothNormals[index + 1].normalized :
+                                m_SmoothNormals[index + 2].normalized,
+                        };
 
-                            index == m_SmoothNormals.Count - 2
-                                ? m_SmoothNormals[index + 1].normalized
-                                : m_SmoothNormals[index + 2].normalized,
-                            SegmentT(t));
+                        normal = Interpolate(segment, SegmentT(t));
                     }
                     else if (index < 0)
                     {
@@ -280,30 +262,21 @@ namespace TiltBrush
             {
                 if (l <= 0)
                 {
-                    return ComputeTangent(
-                        m_ControlPoints[0],
-                        m_ControlPoints[0],
-                        m_ControlPoints[1]);
+                    Vector3[] firstSegment = GetSegmentPositions(0);
+                    return ComputeTangentsAtEndpoints(firstSegment).Item1;
                 }
                 
                 if (l >= m_ArcLengthPositions.Last())
                 {
-                    return ComputeTangent(
-                        m_ControlPoints[m_ControlPoints.Count - 2],
-                        m_ControlPoints[m_ControlPoints.Count - 1],
-                        m_ControlPoints[m_ControlPoints.Count - 1]);
+                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count - 2);
+                    return ComputeTangentsAtEndpoints(lastSegment).Item2;
                 }
 
                 float t = TimeAt(l);
 
                 Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
 
-                return EvaluateFirstDerivative(
-                    segment[0],
-                    segment[1],
-                    segment[2],
-                    segment[3],
-                    SegmentT(t));
+                return EvaluateFirstDerivative(segment, SegmentT(t));
             }
 
             /// @brief Project a point onto the curve and return the arc length positions of the projections.
@@ -344,31 +317,23 @@ namespace TiltBrush
                     {
                         Vector3 toPoint = toProject - m_ControlPoints[0];
 
-                        Vector3 tangentFirst =
-                            ComputeTangent(
-                                    m_ControlPoints[0],
-                                    m_ControlPoints[0],
-                                    m_ControlPoints[1])
-                                .normalized;
+                        Vector3[] firstSegment = GetSegmentPositions(0);
+                        Vector3 tangent = ComputeTangentsAtEndpoints(firstSegment).Item1;
 
-                        float l1 = Vector3.Dot(toPoint, tangentFirst);
+                        float l = Vector3.Dot(toPoint, tangent.normalized);
 
-                        projections.Add(l1);
+                        projections.Add(l);
                     }
                     else
                     {
                         Vector3 toPoint = toProject - m_ControlPoints[^1];
 
-                        Vector3 tangentLast =
-                            ComputeTangent(
-                                    m_ControlPoints[^2],
-                                    m_ControlPoints[^1],
-                                    m_ControlPoints[^1])
-                                .normalized;
+                        Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count - 2);
+                        Vector3 tangent = ComputeTangentsAtEndpoints(lastSegment).Item2;
 
-                        float l2 = Vector3.Dot(toPoint, tangentLast);
+                        float l = Vector3.Dot(toPoint, tangent.normalized);
 
-                        projections.Add(m_ArcLengthPositions.Last() + l2);
+                        projections.Add(m_ArcLengthPositions.Last() + l);
                     }
                 }
 

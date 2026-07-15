@@ -50,7 +50,7 @@ namespace TiltBrush
             /// @brief Construct Curve 
             /// 
             /// 
-            /// @params styleCurveControlPoints - Constrol points of the curve
+            /// @params styleCurveControlPoints - Constrol points of the curve in OpenBrush
             public Curve(List<Vector3> styleCurveControlPoints): this()
             {
                 foreach (var point in styleCurveControlPoints)
@@ -74,6 +74,7 @@ namespace TiltBrush
                     return;
                 }
 
+                // If we have one control point already and another is added
                 if (m_LastInput == Vector3.zero)
                 {
                     m_LastInput = controlPoint;
@@ -84,13 +85,16 @@ namespace TiltBrush
                     return;
                 }
 
-                //elasticurve implementation
-                m_ControlPoints.Add(Interpolate(
+                Vector3[] segment =
+                {
                     m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
                     m_ControlPoints[^1],
                     m_LastInput,
-                    controlPoint,
-                    m_Responsiveness));
+                    controlPoint
+                };
+
+                // Elasticurve implementation
+                m_ControlPoints.Add(Interpolate(segment, m_Responsiveness));
 
                 m_LastInput = controlPoint;
 
@@ -103,19 +107,14 @@ namespace TiltBrush
             }
 
             /// @brief Calculate the tangent vector at a given point using cubic Hermite interpolation factors.
-            /// @param point1 The previous control point.
-            /// @param point2 The current control point.
-            /// @param point3 The next control point.
+            /// @param segment The segment consisting of four control points
             /// @param tension The tension factor for interpolation.
             /// @param continuity The continuity factor for interpolation.
             /// @param bias The bias factor for interpolation.
             /// @return The computed tangent vector at the given point.
-            protected static Vector3 ComputeTangent(
-                Vector3 point1,
-                Vector3 point2,
-                Vector3 point3)
+            protected static (Vector3, Vector3) ComputeTangentsAtEndpoints(Vector3[] segment)
             {
-                return  (point3 - point1) / 2;
+                return  ((segment[2] - segment[0]) / 2, (segment[3] - segment[1]) / 2);
             }
 
             /// @brief Get an array of four Vector3 positions for the segment at the given index.
@@ -156,37 +155,26 @@ namespace TiltBrush
             {
                 if (l < 0)
                 {
-                    //throw new Exception("(l <= 0)");
-                    Vector3 tangent = ComputeTangent(
-                        m_ControlPoints[0],
-                        m_ControlPoints[0],
-                        m_ControlPoints[1]).normalized;
+                    Vector3[] firstSegment = GetSegmentPositions(0);
+                    Vector3 tangent = ComputeTangentsAtEndpoints(firstSegment).Item1;
 
-                    return m_ControlPoints[0] + l * tangent;
+                    return m_ControlPoints[0] + l * tangent.normalized;
                 }
 
                 if (l >= m_ArcLengthPositions.Last())
                 {
-                    //throw new Exception("l >= _arcLengthPositions.Last()");
-                    Vector3 tangent = ComputeTangent(
-                        m_ControlPoints[^2],
-                        m_ControlPoints[^1],
-                        m_ControlPoints[^1]).normalized;
+                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count-2);
+                    Vector3 tangent = ComputeTangentsAtEndpoints(lastSegment).Item2;
 
                     return m_ControlPoints[^1] +
-                           (l - m_ArcLengthPositions.Last()) * tangent;
+                           (l - m_ArcLengthPositions.Last()) * tangent.normalized;
                 }
 
                 float t = TimeAt(l);
 
                 Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
 
-                return Interpolate(
-                    segment[0],
-                    segment[1],
-                    segment[2],
-                    segment[3],
-                    SegmentT(t));
+                return Interpolate(segment, SegmentT(t));
             }
 
             /// @brief Computes the local parameter within a curve segment based on the given time parameter.
@@ -226,76 +214,42 @@ namespace TiltBrush
             }
 
             /// @brief Perform cubic Hermite interpolation to calculate the position on the curve.
-            /// @param point1 First control point.
-            /// @param point2 Second control point.
-            /// @param point3 Third control point.
-            /// @param point4 Fourth control point.
+            /// @param segment The segment consisting of four control points
             /// @param t The parameter value for interpolation.
             /// @return The interpolated Vector3 position on the curve.
-            public Vector3 Interpolate(
-                Vector3 point1,
-                Vector3 point2,
-                Vector3 point3,
-                Vector3 point4,
-                float t)
+            public Vector3 Interpolate(Vector3[] segment, float t)
             {
-                if (t <= 0f)
-                {
-                    return point2;
-                }
-                
-                if (t >= 1f)
-                {
-                    return point3;
-                }
-
-                var tangent2 =
-                    ComputeTangent(point1, point2, point3);
-
-                var tangent3 =
-                    ComputeTangent(point2, point3, point4);
+                (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
 
                 float h1 = (float)(2 * Math.Pow(t, 3) - 3 * Math.Pow(t, 2) + 1);
                 float h2 = (float)((-2) * Math.Pow(t, 3) + 3 * Math.Pow(t, 2));
                 float h3 = (float)(Math.Pow(t, 3) - 2 * Math.Pow(t, 2) + t);
                 float h4 = (float)(Math.Pow(t, 3) - Math.Pow(t, 2));
 
-                Vector3 newPoint =
-                    h1 * point2 +
-                    h2 * point3 +
-                    h3 * tangent2 +
-                    h4 * tangent3;
-
-                return newPoint;
+                return
+                    h1 * segment[1] +
+                    h2 * segment[2] +
+                    h3 * tangents.Item1 +
+                    h4 * tangents.Item2;
             }
 
             /// @brief Calculate the arc length between two points on the interpolated curve.
             /// Recursively subdivides the segment until distances fall below the threshold.
-            /// @param p1 The first control point.
-            /// @param p2 The second control point.
-            /// @param p3 The third control point.
-            /// @param p4 The fourth control point.
+            /// @param segment The segment consisting of four control points
             /// @param t1 The parameter value for the first interpolated point.
             /// @param t2 The parameter value for the second interpolated point.
             /// @param threshold The maximum distance threshold for recursive calculation (default: 0.1).
             /// @return The computed arc length between the two interpolated points.
-            public float ArcLength(
-                Vector3 p1,
-                Vector3 p2,
-                Vector3 p3,
-                Vector3 p4,
+            public float ComputeArcLength(
+                Vector3[] segment,
                 float t1,
                 float t2,
                 float threshold = 0.001f)
             {
-                Vector3 interpolatedPoint1 =
-                    Interpolate(p1, p2, p3, p4, t1);
+                Vector3 point1 = Interpolate(segment, t1);
+                Vector3 point2 = Interpolate(segment, t2);
 
-                Vector3 interpolatedPoint2 =
-                    Interpolate(p1, p2, p3, p4, t2);
-
-                float distance =
-                    Vector3.Distance(interpolatedPoint1, interpolatedPoint2);
+                float distance = Vector3.Distance(point1, point2);
 
                 if (distance < threshold)
                 {
@@ -305,8 +259,8 @@ namespace TiltBrush
                 {
                     float tMid = t1 + (t2 - t1) / 2;
 
-                    return ArcLength(p1, p2, p3, p4, t1, tMid, threshold) +
-                           ArcLength(p1, p2, p3, p4, tMid, t2, threshold);
+                    return ComputeArcLength(segment, t1, tMid, threshold) +
+                           ComputeArcLength(segment, tMid, t2, threshold);
                 }
             }
 
@@ -317,13 +271,7 @@ namespace TiltBrush
             {
                 Vector3[] segment = GetSegmentPositions(i);
 
-                return ArcLength(
-                    segment[0],
-                    segment[1],
-                    segment[2],
-                    segment[3],
-                    0f,
-                    1f);
+                return ComputeArcLength(segment, 0f, 1f);
             }
 
             /// @brief Retrieve the total arc length of the entire curve.
@@ -346,13 +294,16 @@ namespace TiltBrush
             /// @brief Finalize the curve, updating arc length information by computing the last segment's length.
             public virtual void Finish()
             {
-                //elasticurve implementation
-                m_ControlPoints.Add(Interpolate(
+                Vector3[] segment =
+                {
                     m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
                     m_ControlPoints[^1],
                     m_LastInput,
-                    m_LastInput,
-                    m_Responsiveness));
+                    m_LastInput
+                };
+
+                // Elasticurve implementation
+                m_ControlPoints.Add(Interpolate(segment, m_Responsiveness));
 
                 if (m_ControlPoints.Count >= 3)
                 {
@@ -361,11 +312,7 @@ namespace TiltBrush
                         ComputeArcLength(m_ControlPoints.Count - 3));
                 }
 
-                if (m_ControlPoints.Count < 2)
-                {
-                    return;
-                }
-
+                // Compute arcLength for last segment
                 m_ArcLengthPositions.Add(
                     m_ArcLengthPositions.Last() +
                     ComputeArcLength(m_ControlPoints.Count - 2));
