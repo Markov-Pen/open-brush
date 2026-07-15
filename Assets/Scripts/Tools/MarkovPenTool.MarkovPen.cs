@@ -58,12 +58,12 @@ namespace TiltBrush
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
-        /// @param targetMapping A Mapping representing the growing target base curve and an empty target style curve.
+        /// @param targetMapping A Mapping representing the growing target base path and an empty target style curve.
         /// @return A list of reconstructed point pairs on the target curve.
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
             // Debug.Log("MarkovPen: Up vector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
-            m_TargetMapping.BaseCurve.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
+            m_TargetMapping.BasePath.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
         
             return m_Synthesizer.Reconstruct(m_TargetMapping);
         }

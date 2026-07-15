@@ -21,13 +21,13 @@ namespace TiltBrush
     partial class MarkovPen
     {
         /// @class Mapping
-        /// @brief Represents a mapping between arc length positions and offsets from style to base curve.
+        /// @brief Represents a mapping between arc length positions and offsets from style curve to base path.
         ///
-        /// Samples the style curve, projects samples onto the base curve, and computes mapping and offsets.
+        /// Samples the style curve, projects samples onto the base path, and computes mapping and offsets.
         public class Mapping
         {
             //Curves
-            public BasePath BaseCurve { get; private set; }
+            public BasePath BasePath { get; private set; }
 
             private Curve m_StyleCurve;
 
@@ -48,9 +48,9 @@ namespace TiltBrush
 
             /// @brief Constructor for the Mapping class.
             /// @param styleCurve The style curve for the mapping.
-            /// @param baseCurve The base curve for the mapping.
-            /// @exception NullReferenceException Thrown if styleCurve or baseCurve is null.
-            public Mapping(BasePath baseCurve, Curve styleCurve)
+            /// @param basePath The base path for the mapping.
+            /// @exception NullReferenceException Thrown if styleCurve or basePath is null.
+            public Mapping(BasePath basePath, Curve styleCurve)
             {
                 Debug.Log("MarkovPen: compute Mapping");
                 LastIndex = -1;
@@ -60,12 +60,12 @@ namespace TiltBrush
                     throw new NullReferenceException("StyleCurve must not be null");
                 }
 
-                if (baseCurve == null)
+                if (basePath == null)
                 {
-                    throw new NullReferenceException("BaseCurve must not be null");
+                    throw new NullReferenceException("BasePath must not be null");
                 }
 
-                BaseCurve = baseCurve;
+                BasePath = basePath;
                 m_StyleCurve = styleCurve;
 
                 if (m_StyleCurve.ArcLength() < m_SamplingInterval)
@@ -79,7 +79,7 @@ namespace TiltBrush
                 //sample style curve
                 List<Vector3> samples = SampleStyleCurveUniformly(samplingInterval);
 
-                //project samples to base curve
+                //project samples to base path
                 List<float> projections = Project(samples);
 
                 //compute mapping
@@ -97,7 +97,7 @@ namespace TiltBrush
             public Mapping()
             {
                 LastIndex = -1;
-                BaseCurve = new BasePath();
+                BasePath = new BasePath();
                 m_StyleCurve = new Curve();
 
             }
@@ -120,16 +120,16 @@ namespace TiltBrush
                 return samples;
             }
 
-            /// @brief Projects a list of 3D samples onto the base curve and returns their projections.
+            /// @brief Projects a list of 3D samples onto the base path and returns their projections.
             /// @param samples A list of 3D vectors representing the samples to be projected.
-            /// @return A list of float values representing the projections onto the base curve.
+            /// @return A list of float values representing the projections onto the base path.
             public List<float> Project(List<Vector3> samples)
             {
                 List<float> projections = new List<float>();
                 
                 foreach (var sample in samples)
                 {
-                    float projection = BaseCurve.Project(sample)[0];
+                    float projection = BasePath.Project(sample)[0];
                     projections.Add(projection);
 
                 }
@@ -149,17 +149,17 @@ namespace TiltBrush
 
             /// @brief Associate arc length positions of projected points to the corresponding offsets.
             /// @param samples Samples aligned along the style curve.
-            /// @param projections Projected arc length positions aligned along the base curve.
+            /// @param projections Projected arc length positions aligned along the base path.
             private void ComputeMapping(List<Vector3> samples, List<float> projections)
             {
                 m_Mapping = new List<Vector2>();
 
                 for (int i = 0; i < samples.Count; ++i)
                 {
-                    Vector3 basePoint = BaseCurve.PositionAt(projections[i]);
+                    Vector3 basePoint = BasePath.PositionAt(projections[i]);
 
                     Vector3 smoothNormal =
-                        BaseCurve.SmoothNormalAt(projections[i]);
+                        BasePath.SmoothNormalAt(projections[i]);
 
                     Vector3 toSample = samples[i] - basePoint;
 
@@ -217,13 +217,13 @@ namespace TiltBrush
                 }
             }
 
-            /// @brief Sets the tap of the BaseCurve to the computed max offset.
+            /// @brief Sets the tap of the base path to the computed max offset.
             /// @param offset The max offset to set as tap.
             public void SetMaxOffset(float offset)
             {
                 if (IsEmpty()) ;
 
-                BaseCurve.Tap = offset;
+                BasePath.Tap = offset;
 
                 //_maxOffset = offset;
             }
@@ -241,10 +241,10 @@ namespace TiltBrush
             public Tuple<Vector3, Vector3> Inflate(Vector2 association)
             {
                 Vector3 basePoint =
-                    BaseCurve.PositionAt(association.x);
+                    BasePath.PositionAt(association.x);
 
                 Vector3 normal =
-                    BaseCurve.SmoothNormalAt(association.x);
+                    BasePath.SmoothNormalAt(association.x);
 
                 Vector3 toPoint =
                     Vector3.Scale(
@@ -281,9 +281,9 @@ namespace TiltBrush
                         ? 0
                         : m_Mapping.Last().x + offsets.x;
 
-                if (l >= BaseCurve.ArcLength())
+                if (l >= BasePath.ArcLength())
                 {
-                    // Check if the current arcLength exceeds the arcLength of the base curve
+                    // Check if the current arcLength exceeds the arcLength of the base path
                     return false;
                 }
 
@@ -308,7 +308,7 @@ namespace TiltBrush
             /// @brief Clears attributes related to the mapping and resets state.
             public void Clear()
             {
-                BaseCurve = null;
+                BasePath = null;
 
                 m_StyleCurve = null;
 

@@ -21,10 +21,10 @@ namespace TiltBrush
 {
     public partial class MarkovPen
     { 
-        /// @class BaseCurve
-        /// @brief Represents the base curve of the MarkovPen.
+        /// @class BasePath
+        /// @brief Represents the base path of the MarkovPen.
         ///
-        /// The BaseCurve class extends the functionality of the Curve class and provides
+        /// The BasePath class extends the functionality of the Curve class and provides
         /// additional features such as projection, spline functionalities, and smoothing functionalities.
         public class BasePath : Curve
         {
@@ -59,9 +59,9 @@ namespace TiltBrush
                 Finish();
             }
 
-            /// @brief Add a control point to the base curve and update related information.
+            /// @brief Add a control point to the base path and update related information.
             /// Extends the base class method to incorporate smoothing functionalities based on the tap value.
-            /// @param controlPoint The control point to be added to the base curve.
+            /// @param controlPoint The control point to be added to the base path.
             /// @param upVector The up vector associated with the control point.
             public void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
             {
