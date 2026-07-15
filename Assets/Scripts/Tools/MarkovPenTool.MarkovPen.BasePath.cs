@@ -150,9 +150,6 @@ namespace TiltBrush
                 Vector3 point2,
                 Vector3 point3,
                 Vector3 point4,
-                float tension,
-                float continuity,
-                float bias,
                 float t)
             {
                 if (t <= 0f)
@@ -165,10 +162,10 @@ namespace TiltBrush
                 }
 
                 Vector3 tangent2 =
-                    ComputeTangent(point1, point2, point3, tension, continuity, bias);
+                    ComputeTangent(point1, point2, point3);
 
                 Vector3 tangent3 =
-                    ComputeTangent(point2, point3, point4, tension, continuity, bias);
+                    ComputeTangent(point2, point3, point4);
 
                 float h1 = (float)(6 * Math.Pow(t, 2) - 6 * Math.Pow(t, 1));
                 float h2 = (float)((-6) * Math.Pow(t, 2) + 6 * Math.Pow(t, 1));
@@ -228,10 +225,6 @@ namespace TiltBrush
                             index == m_SmoothNormals.Count - 2
                                 ? m_SmoothNormals[index + 1].normalized
                                 : m_SmoothNormals[index + 2].normalized,
-
-                            0,
-                            0,
-                            0,
                             SegmentT(t));
                     }
                     else if (index < 0)
@@ -269,7 +262,6 @@ namespace TiltBrush
             /// @return The total arc length of the curve.
             public override float ArcLength()
             {
-
                 if (Tap == 0)
                 {
                     return base.ArcLength();
@@ -297,10 +289,7 @@ namespace TiltBrush
                         ComputeTangent(
                             m_ControlPoints[0],
                             m_ControlPoints[0],
-                            m_ControlPoints[1],
-                            0,
-                            0,
-                            0);
+                            m_ControlPoints[1]);
                 }
                 else if (l >= m_ArcLengthPositions.Last())
                 {
@@ -308,10 +297,7 @@ namespace TiltBrush
                         ComputeTangent(
                             m_ControlPoints[m_ControlPoints.Count - 2],
                             m_ControlPoints[m_ControlPoints.Count - 1],
-                            m_ControlPoints[m_ControlPoints.Count - 1],
-                            0,
-                            0,
-                            0);
+                            m_ControlPoints[m_ControlPoints.Count - 1]);
                 }
                 else
                 {
@@ -324,9 +310,6 @@ namespace TiltBrush
                         segment[1],
                         segment[2],
                         segment[3],
-                        0,
-                        0,
-                        0,
                         SegmentT(t));
                 }
 
@@ -375,10 +358,7 @@ namespace TiltBrush
                             ComputeTangent(
                                     m_ControlPoints[0],
                                     m_ControlPoints[0],
-                                    m_ControlPoints[1],
-                                    0,
-                                    0,
-                                    0)
+                                    m_ControlPoints[1])
                                 .normalized;
 
                         float l1 = Vector3.Dot(toPoint, tangentFirst);
@@ -393,10 +373,7 @@ namespace TiltBrush
                             ComputeTangent(
                                     m_ControlPoints[^2],
                                     m_ControlPoints[^1],
-                                    m_ControlPoints[^1],
-                                    0,
-                                    0,
-                                    0)
+                                    m_ControlPoints[^1])
                                 .normalized;
 
                         float l2 = Vector3.Dot(toPoint, tangentLast);

@@ -90,9 +90,6 @@ namespace TiltBrush
                     m_ControlPoints[^1],
                     (Vector3)m_LastInput,
                     controlPoint,
-                    0,
-                    0,
-                    0,
                     m_Responsiveness));
 
                 m_LastInput = controlPoint;
@@ -116,15 +113,9 @@ namespace TiltBrush
             protected static Vector3 ComputeTangent(
                 Vector3 point1,
                 Vector3 point2,
-                Vector3 point3,
-                float tension,
-                float continuity,
-                float bias)
+                Vector3 point3)
             {
-                var factor1 = (1 - tension) * (1 + continuity) * (1 + bias) / 2;
-                var factor2 = (1 - tension) * (1 - continuity) * (1 - bias) / 2;
-
-                return factor1 * (point2 - point1) + factor2 * (point3 - point2);
+                return  (point3 - point1) / 2;
             }
 
             /// @brief Get an array of four Vector3 positions for the segment at the given index.
@@ -169,10 +160,7 @@ namespace TiltBrush
                     Vector3 tangent = ComputeTangent(
                         m_ControlPoints[0],
                         m_ControlPoints[0],
-                        m_ControlPoints[1],
-                        0,
-                        0,
-                        0).normalized;
+                        m_ControlPoints[1]).normalized;
 
                     return m_ControlPoints[0] + l * tangent;
                 }
@@ -183,10 +171,7 @@ namespace TiltBrush
                     Vector3 tangent = ComputeTangent(
                         m_ControlPoints[^2],
                         m_ControlPoints[^1],
-                        m_ControlPoints[^1],
-                        0,
-                        0,
-                        0).normalized;
+                        m_ControlPoints[^1]).normalized;
 
                     return m_ControlPoints[^1] +
                            (l - m_ArcLengthPositions.Last()) * tangent;
@@ -201,9 +186,6 @@ namespace TiltBrush
                     segment[1],
                     segment[2],
                     segment[3],
-                    0,
-                    0,
-                    0,
                     SegmentT(t));
             }
 
@@ -258,9 +240,6 @@ namespace TiltBrush
                 Vector3 point2,
                 Vector3 point3,
                 Vector3 point4,
-                float tension,
-                float continuity,
-                float bias,
                 float t)
             {
                 if (t <= 0f)
@@ -273,10 +252,10 @@ namespace TiltBrush
                 }
 
                 var tangent2 =
-                    ComputeTangent(point1, point2, point3, tension, continuity, bias);
+                    ComputeTangent(point1, point2, point3);
 
                 var tangent3 =
-                    ComputeTangent(point2, point3, point4, tension, continuity, bias);
+                    ComputeTangent(point2, point3, point4);
 
                 float h1 = (float)(2 * Math.Pow(t, 3) - 3 * Math.Pow(t, 2) + 1);
                 float h2 = (float)((-2) * Math.Pow(t, 3) + 3 * Math.Pow(t, 2));
@@ -312,10 +291,10 @@ namespace TiltBrush
                 float threshold = 0.001f)
             {
                 Vector3 interpolatedPoint1 =
-                    Interpolate(p1, p2, p3, p4, Tension, Continuity, Bias, t1);
+                    Interpolate(p1, p2, p3, p4, t1);
 
                 Vector3 interpolatedPoint2 =
-                    Interpolate(p1, p2, p3, p4, Tension, Continuity, Bias, t2);
+                    Interpolate(p1, p2, p3, p4, t2);
 
                 float distance =
                     Vector3.Distance(interpolatedPoint1, interpolatedPoint2);
@@ -375,9 +354,6 @@ namespace TiltBrush
                     m_ControlPoints[^1],
                     m_LastInput,
                     m_LastInput,
-                    0,
-                    0,
-                    0,
                     m_Responsiveness));
 
                 if (m_ControlPoints.Count >= 3)
