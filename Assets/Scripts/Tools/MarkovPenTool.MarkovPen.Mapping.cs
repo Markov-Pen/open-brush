@@ -290,7 +290,7 @@ namespace TiltBrush
                 // Update _mapping by adding a point out of current arcLength and its offset
                 m_Mapping.Add(new Vector2(l, offsets.y));
 
-                m_StyleCurve.Append(
+                m_StyleCurve.AddControlPoint(
                     Inflate(m_Mapping.Last()).Item2);
 
                 LastIndex = index;

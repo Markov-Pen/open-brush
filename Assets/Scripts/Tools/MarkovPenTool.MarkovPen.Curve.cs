@@ -29,10 +29,6 @@ namespace TiltBrush
             protected List<float> m_ArcLengthPositions;
             protected List<Vector3> m_ControlPoints = new();
 
-            public float Tension = 0f;
-            public float Continuity = 0f;
-            public float Bias = 0f;
-
             private Vector3 m_LastInput = Vector3.zero;
 
             private const float k_Responsiveness = 1f;
@@ -74,7 +70,8 @@ namespace TiltBrush
                     return;
                 }
 
-                // If we have one control point already and another is added
+                // If we have one control point already and another is added,
+                // just remember the added point
                 if (m_LastInput == Vector3.zero)
                 {
                     m_LastInput = controlPoint;
@@ -128,23 +125,6 @@ namespace TiltBrush
                 Vector3 point4 = m_ControlPoints[index == m_ControlPoints.Count - 2 ? index + 1 : index + 2];
 
                 return new[] { point1, point2, point3, point4 };
-            }
-
-            /// @brief Append a control point to the curve and update related information.
-            /// @param point The control point to be appended to the curve.
-            public void Append(Vector3 point)
-            {
-                if (m_ControlPoints.Count == 0)
-                {
-                    m_ControlPoints.Add(point);
-                }
-
-                m_ControlPoints.Add(point);
-
-                if (m_ControlPoints.Count > 3)
-                {
-                    ComputeArcLength(m_ControlPoints.Count - 2);
-                }
             }
 
             /// @brief Calculates the position along the curve at a given arc length parameter.
@@ -233,6 +213,23 @@ namespace TiltBrush
                     h4 * tangents.Item2;
             }
 
+            /// @brief Computes the arc length of a cubic Bezier curve segment at a specific parameter value.
+            /// @param i The index of the curve segment.
+            /// @return The arc length of the cubic Bezier curve segment at the given parameter value.
+            private float ComputeArcLength(int i)
+            {
+                Vector3[] segment = GetSegmentPositions(i);
+
+                // If the segment is a straight line, just return distance between endpoints
+                if (Vector3.Distance(segment[0], segment[1]) == 0 &&
+                    Vector3.Distance(segment[2], segment[3]) == 0)
+                {
+                    return Vector3.Distance(segment[1], segment[2]);
+                }
+
+                return ComputeArcLength(segment, 0f, 1f);
+            }
+
             /// @brief Calculate the arc length between two points on the interpolated curve.
             /// Recursively subdivides the segment until distances fall below the threshold.
             /// @param segment The segment consisting of four control points
@@ -262,16 +259,6 @@ namespace TiltBrush
                     return ComputeArcLength(segment, t1, tMid, threshold) +
                            ComputeArcLength(segment, tMid, t2, threshold);
                 }
-            }
-
-            /// @brief Computes the arc length of a cubic Bezier curve segment at a specific parameter value.
-            /// @param i The index of the curve segment.
-            /// @return The arc length of the cubic Bezier curve segment at the given parameter value.
-            private float ComputeArcLength(int i)
-            {
-                Vector3[] segment = GetSegmentPositions(i);
-
-                return ComputeArcLength(segment, 0f, 1f);
             }
 
             /// @brief Retrieve the total arc length of the entire curve.
@@ -305,6 +292,7 @@ namespace TiltBrush
                 // Elasticurve implementation
                 m_ControlPoints.Add(Interpolate(segment, m_Responsiveness));
 
+                // Compute arcLength for segment before last
                 if (m_ControlPoints.Count >= 3)
                 {
                     m_ArcLengthPositions.Add(
@@ -325,7 +313,6 @@ namespace TiltBrush
                 return m_ControlPoints.Count >= 2 &&
                        m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
-           
         }
     }
 }
