@@ -34,13 +34,13 @@ namespace TiltBrush
 
             private List<Vector3> m_SmoothNormals = new();
 
-            // Last normal returned by SmoothNormalAt, used to keep the sign continuous between
+            // Last normal computed, used to keep the sign continuous between
             // consecutive synthesis queries so the styled offset never flips to the other side of
             // the curve (which shows up as ~2x-offset jumps in the stroke). Zero = uninitialized.
             private Vector3 m_LastSmoothNormal = Vector3.zero;
 
             /// @brief Construct a target base path
-            public BasePath() : base(0.75f)
+            public BasePath(float responsiveness = 0.75f) : base(responsiveness)
             {
             }
 
@@ -50,9 +50,7 @@ namespace TiltBrush
             public BasePath(List<Vector3> controlPoints)
             {
                 Vector3 upVector = controlPoints.Last() - controlPoints.First();
-                float x = upVector.x;
-                float y = upVector.y;
-                upVector = new Vector3(-y, x, 0.0f).normalized;
+                upVector = new Vector3(-upVector.y, upVector.x, 0.0f).normalized;
 
                 AddControlPoint(controlPoints.First(), upVector);
                 AddControlPoint(controlPoints.Last(), upVector);
@@ -66,11 +64,6 @@ namespace TiltBrush
             public void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
             {
                 base.AddControlPoint(controlPoint);
-
-                if (Tap == 0)
-                {
-                    return;
-                }
 
                 m_UpVectors.Add(
                     m_UpVectors.Count > 0
@@ -86,10 +79,7 @@ namespace TiltBrush
                 {
                     int index = m_SmoothNormals.Count;
 
-                    m_SmoothNormals.Add(
-                        ComputeSmoothNormal(
-                            m_UpVectors[index],
-                            ComputeSmoothTangent(m_ArcLengthPositions[index])));
+                    m_SmoothNormals.Add(ComputeSmoothNormal(index));
 
                     if (m_SmoothNormals.Count > 1 &&
                         Vector3.Dot(m_SmoothNormals[^1], m_SmoothNormals[^2]) < 0)
@@ -103,20 +93,19 @@ namespace TiltBrush
             /// Averages the normalized first derivatives at positions within a window around the given center.
             /// @param center The center position around which the smoothed tangent is calculated.
             /// @return The computed smoothed tangent vector.
-            private Vector3 ComputeSmoothTangent(float center)
+            private Vector3 ComputeSmoothTangent(int index)
             {
+                float center = m_ArcLengthPositions[index];
                 float windowSize = 2 * Tap + 1;
-
-                Vector3 smoothTangent = Vector3.zero;
-
-                for (float length = center - Tap;
-                    length <= center + Tap;
-                    length += (1.0f / windowSize))
+                
+                Vector3 smoothTangentVector = Vector3.zero;
+                // Add up tangent vectors
+                for (float l = center - Tap; l <= center + Tap; l += (1.0f / windowSize))
                 {
-                    smoothTangent += FirstDerivativeAt(length).normalized;
+                    smoothTangentVector += FirstDerivativeAt(l).normalized;
                 }
 
-                return smoothTangent / windowSize;
+                return smoothTangentVector / windowSize;
             }
 
             /// @brief Computes a smoothed normal vector based on the provided up vector and smooth tangent.
@@ -124,14 +113,16 @@ namespace TiltBrush
             /// @param upVector The original up vector to be smoothed.
             /// @param smoothTangent The smooth tangent vector to influence the smoothing.
             /// @return A normalized vector representing the computed smoothed normal.
-            private Vector3 ComputeSmoothNormal(Vector3 upVector, Vector3 smoothTangent)
+            private Vector3 ComputeSmoothNormal(int index)
             {
-                upVector = upVector.normalized * 100;
-                smoothTangent = smoothTangent.normalized;
+                Vector3 upVector = m_UpVectors[index].normalized * 100;
+                Vector3 smoothTangentDirection = ComputeSmoothTangent(index).normalized;
 
-                float projection = Vector3.Dot(upVector, smoothTangent);
+                // Project prologenged up vector onto smooth tangent
+                float projection = Vector3.Dot(upVector, smoothTangentDirection);
 
-                return (upVector - smoothTangent * projection).normalized;
+                // make up vector perpendicular to smoot tangent
+                return (upVector - smoothTangentDirection * projection).normalized;
             }
 
             /// @brief Evaluate the first derivative of a cubic Hermite spline at a specified parameter t.
@@ -166,14 +157,6 @@ namespace TiltBrush
             /// @return The computed smoothed normal vector at the specified arc length.
             public Vector3 SmoothNormalAt(float l)
             {
-                if (Tap == 0)
-                {
-                    Vector3 line =
-                        Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
-
-                    return new Vector3(-line.y, line.x, 0f);
-                }
-
                 Vector3 normal;
 
                 if (l <= 0)
@@ -189,9 +172,6 @@ namespace TiltBrush
                     float t = TimeAt(l);
 
                     int index = SegmentIndex(t);
-
-                    if (index >= 0 && index + 2 <= m_SmoothNormals.Count)
-                    {
                         Vector3[] segment =
                         {
                             index == 0 ?
@@ -205,19 +185,6 @@ namespace TiltBrush
                         };
 
                         normal = Interpolate(segment, SegmentT(t));
-                    }
-                    else if (index < 0)
-                    {
-                        throw new ArgumentOutOfRangeException("The Argument is out of Range, due index to small.");
-                    }
-                    else if (index + 2 > m_SmoothNormals.Count)
-                    {
-                        throw new ArgumentOutOfRangeException("The Argument is out of Range, due index to big.");
-                    }
-                    else
-                    {
-                        throw new ArgumentOutOfRangeException("The Argument is out of Range, but its not clear why.");
-                    }
                 }
 
                 normal = normal.normalized;
@@ -286,15 +253,15 @@ namespace TiltBrush
             {
                 List<float> projections = new List<float>();
 
-                Vector3 line =
-                    Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
-
-                Vector3 normal = new Vector3(-line.y, line.x, 0f);
-
                 if(m_ControlPoints.Count == 2)
                 {
+                    Vector3 tangentDirection =
+                    Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
+
+                    Vector3 normal = new Vector3(-tangentDirection.y, tangentDirection.x, 0f);
+
                     Vector3 toPoint = toProject - m_ControlPoints[0];   
-                    projections.Add(Vector3.Dot(toPoint, line));
+                    projections.Add(Vector3.Dot(toPoint, tangentDirection));
 
                     return projections;
                 }
@@ -306,8 +273,7 @@ namespace TiltBrush
                         toProject,
                         m_ArcLengthPositions[index - 1],
                         m_ArcLengthPositions[index],
-                        projections,
-                        normal);
+                        projections);
                 }
 
                 if (projections.Count == 0)
@@ -351,11 +317,10 @@ namespace TiltBrush
                 Vector3 point,
                 float l1,
                 float l2,
-                List<float> projections,
-                Vector3 normal)
+                List<float> projections)
             {
-                double d1 = Shoot(point, normal, l1);
-                double d2 = Shoot(point, normal, l2);
+                double d1 = Shoot(point, l1);
+                double d2 = Shoot(point, l2);
 
                 if (d1 < 0.0 && d2 < 0.0)
                 {
@@ -369,14 +334,14 @@ namespace TiltBrush
 
                 float middle = l1 + (l2 - l1) / 2.0f;
 
-                if (Math.Abs(d1) < 0.0001 && Math.Abs(d2) < 0.001)
+                if (Math.Abs(d1) < 0.001 && Math.Abs(d2) < 0.001)
                 {
                     projections.Add(middle);
                     return;
                 }
 
-                Project(point, l1, middle, projections, normal);
-                Project(point, middle, l2, projections, normal);
+                Project(point, l1, middle, projections);
+                Project(point, middle, l2, projections);
             }
 
             /// @brief Perform a shooting method to calculate the signed distance from a point to the curve.
@@ -384,27 +349,27 @@ namespace TiltBrush
             /// @param normal The normal vector used for the shooting method.
             /// @param l The arc length position on the curve.
             /// @return The signed distance from the point to the curve.
-            private float Shoot(Vector3 point, Vector3 normal, float l)
+            private float Shoot(Vector3 point, float l)
             {
                 Vector3 basePoint = PositionAt(l);
                 Vector3 toPoint = point - basePoint;
 
-                normal.Normalize();
+                Vector3 normal= SmoothNormalAt(l).normalized;
 
                 float projection = Vector3.Dot(normal, toPoint);
                 Vector3 offset = normal * projection;
                 Vector3 closestPoint = basePoint + offset;
 
-                float dist = Vector3.Distance(point, closestPoint);
+                float distance = Vector3.Distance(point, closestPoint);
 
                 double determinant = toPoint.x * normal.y - toPoint.y * normal.x;
 
                 if (determinant < 0)
                 {
-                    dist *= -1;
+                    distance *= -1;
                 }
 
-                return dist;
+                return distance;
             }
 
             /// @brief Finalize the curve by computing smoothed tangents and normals for the remaining control points.
@@ -413,20 +378,12 @@ namespace TiltBrush
             {
                 base.Finish();
 
-                if (m_ControlPoints.Count < 2 || Tap == 0)
-                {
-                    return;
-                }
-
                 for (
                     int index = m_SmoothNormals.Count;
                     index < m_ControlPoints.Count;
                     index++)
                 {
-                    m_SmoothNormals.Add(
-                        ComputeSmoothNormal(
-                            m_UpVectors[index],
-                            ComputeSmoothTangent(m_ArcLengthPositions[index])));
+                    m_SmoothNormals.Add(ComputeSmoothNormal(index));
                 }
             }
         }
