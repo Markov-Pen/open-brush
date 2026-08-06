@@ -25,7 +25,7 @@ namespace TiltBrush
     {
         private Mapping m_ExampleMapping;
         private Mapping m_TargetMapping = new();
-        private Synthesizer m_Synthesizer;
+        private SynthesisEngine m_SynthesisEngine= new();
 
         private Curve m_ExampleStyleCurve;
         private Curve m_TargetStyleCurve;
@@ -45,7 +45,6 @@ namespace TiltBrush
             Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
 
             m_ExampleMapping = new Mapping(basePath, styleCurve);
-            m_Synthesizer = new Synthesizer(m_ExampleMapping);
         }
 
         /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
@@ -53,8 +52,6 @@ namespace TiltBrush
         public void Initialize(Mapping exampleMapping)
         {
             m_ExampleMapping = exampleMapping;
-
-            m_Synthesizer = new Synthesizer(m_ExampleMapping);
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
@@ -63,9 +60,9 @@ namespace TiltBrush
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
             // Debug.Log("MarkovPen: Up vector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
-            m_TargetMapping.BasePath.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
+            m_TargetMapping.BasePath.AddControlPoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
         
-            return m_Synthesizer.Reconstruct(m_TargetMapping);
+            return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
         }
 
         /// @brief Discard the current target curve so the next stroke starts fresh.
@@ -86,7 +83,7 @@ namespace TiltBrush
         /// @brief Clears the MarkovPen state by nullifying the synthesizer and example mapping.
         public void Clear()
         {
-            m_Synthesizer = null;
+            m_SynthesisEngine = null;
             m_ExampleMapping = null;
         }
     }

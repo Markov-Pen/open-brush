@@ -1,0 +1,68 @@
+// Copyright 2026 Marvin Link, Katrin Lang, Artur Meshalkin
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace TiltBrush
+{
+    partial class MarkovPen
+    {
+        /// @class SynthesisEngine
+        /// @brief Synthesis engine of a Markov Pen that generates associations a the target mapping
+        private class SynthesisEngine
+        {
+            /// @brief Reconstruct an example mapping one-to-one
+            ///
+            /// Exactly reproduces the example mapping along a target base path
+            /// by iteratively applying offsets to the target mapping
+            ///
+            /// @param example_mapping The original mapping to reproduce
+            /// @param target_mapping The target mapping to populate
+            /// @return A list of control points on the target style curve
+            /// and the associated rotation of the controller
+            public List<Tuple<Vector3, Quaternion>> Reconstruct(Mapping exampleMapping, Mapping targetMapping)
+            {
+                float offset = exampleMapping.MaxOffset;
+
+                if (targetMapping.IsEmpty())
+                {
+                    targetMapping.SetMaxOffset(offset);
+                }
+
+                int index = (targetMapping.LastIndex + 1) % exampleMapping.GetMapping.Count;
+
+                List<Tuple<Vector3, Quaternion>> pointers = new List<Tuple<Vector3, Quaternion>>();
+
+                while (true)
+                {
+                    Vector2 offsets = exampleMapping.GetOffsets(index);
+
+                    if (!targetMapping.Apply(offsets, index))
+                    {
+                        break;
+                    }
+
+                    Vector2 association = targetMapping.GetAssociation(targetMapping.GetMapping.Count - 1);
+                    Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
+                    pointers.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
+
+                    index = (index + 1) % exampleMapping.GetMapping.Count;
+                }
+
+                return pointers;
+            }
+        }
+    }
+}

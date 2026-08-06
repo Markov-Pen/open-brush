@@ -58,7 +58,7 @@ namespace TiltBrush
                 base.UpdateTool();
                 return;
             }
-
+            
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
             if (triggerDown)
