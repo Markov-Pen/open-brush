@@ -144,32 +144,6 @@ namespace TiltBrush
                 return (upVector - smoothTangentDirection * projection).normalized;
             }
 
-            /// @brief Evaluate the first derivative of a cubic Hermite spline at a specified parameter t.
-            /// @param point1 The first control point of the spline.
-            /// @param point2 The second control point of the spline.
-            /// @param point3 The third control point of the spline.
-            /// @param point4 The fourth control point of the spline.
-            /// @param t The parameter at which to evaluate the first derivative (range [0,1]).
-            /// @return The first derivative of the spline at parameter t.
-            public static Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
-            {
-
-                (Vector3, Vector3) tangents =  ComputeTangentsAtEndpoints(segment);
-
-                float h1 = (float)(6 * Math.Pow(t, 2) - 6 * Math.Pow(t, 1));
-                float h2 = (float)((-6) * Math.Pow(t, 2) + 6 * Math.Pow(t, 1));
-                float h3 = (float)(3 * Math.Pow(t, 2) - 4 * Math.Pow(t, 1) + 1);
-                float h4 = (float)(3 * Math.Pow(t, 2) - 2 * Math.Pow(t, 1));
-
-                Vector3 newPoint =
-                    h1 * segment[1] +
-                    h2 * segment[2] +
-                    h3 * tangents.Item1 +
-                    h4 * tangents.Item2;
-
-                return newPoint;
-            }
-
             /// @brief Retrieve the smoothed normal vector at a specified arc length along the curve.
             /// Uses cubic Hermite interpolation between precomputed smooth normals.
             /// @param l The arc length at which to retrieve the smoothed normal vector.
@@ -203,31 +177,6 @@ namespace TiltBrush
 
                 return Interpolate(smoothNormals, SegmentTime(t));
                 
-            }
-
-            /// @brief Retrieve the tangent vector at a specified arc length along the curve.
-            /// Uses cubic Hermite interpolation to compute the tangent for the segment.
-            /// @param l The arc length at which to retrieve the tangent vector.
-            /// @return The computed tangent vector at the specified arc length.
-            public Vector3 FirstDerivativeAt(float l)
-            {
-                if (l <= 0)
-                {
-                    Vector3[] firstSegment = GetSegmentPositions(0);
-                    return ComputeTangentsAtEndpoints(firstSegment).Item1;
-                }
-                
-                if (l >= m_ArcLengthPositions.Last())
-                {
-                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count - 2);
-                    return ComputeTangentsAtEndpoints(lastSegment).Item2;
-                }
-
-                float t = TimeAt(l);
-
-                Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
-
-                return EvaluateFirstDerivative(segment, SegmentTime(t));
             }
 
             /// @brief Project a point onto the curve and return the arc length positions of the projections.

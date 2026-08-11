@@ -58,12 +58,12 @@ namespace TiltBrush
 
             /// @brief Check if the curve has been fully processed and finalized.
             /// @return True if the curve is finished, otherwise false.
-            public bool IsFinished()
+            public virtual bool IsFinished()
             {
                 return m_ControlPoints.Count >= 2 &&
                     m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
-            
+
             /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
             /// If the curve is empty, the control point is directly added. If it's the first control point,
             /// it is stored as the last input for future interpolation. For subsequent points, the method uses
@@ -151,6 +151,31 @@ namespace TiltBrush
                 return Interpolate(segment, SegmentTime(t));
             }
 
+            /// @brief Retrieve the tangent vector at a specified arc length along the curve.
+            /// Uses cubic Hermite interpolation to compute the tangent for the segment.
+            /// @param l The arc length at which to retrieve the tangent vector.
+            /// @return The computed tangent vector at the specified arc length.
+            public Vector3 FirstDerivativeAt(float l)
+            {
+                if (l <= 0)
+                {
+                    Vector3[] firstSegment = GetSegmentPositions(0);
+                    return ComputeTangentsAtEndpoints(firstSegment).Item1;
+                }
+
+                if (l >= m_ArcLengthPositions.Last())
+                {
+                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count - 2);
+                    return ComputeTangentsAtEndpoints(lastSegment).Item2;
+                }
+
+                float t = TimeAt(l);
+
+                Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
+
+                return EvaluateFirstDerivative(segment, SegmentTime(t));
+            }
+
             /// @brief Get an array of four Vector3 positions for the segment at the given index.
             /// @param index The segment index used to retrieve control points.
             /// @return An array of four Vector3 positions.
@@ -183,6 +208,7 @@ namespace TiltBrush
             {
                 (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
 
+                // Hermite basis functions
                 float h1 = (float)(2 * Math.Pow(t, 3) - 3 * Math.Pow(t, 2) + 1);
                 float h2 = (float)((-2) * Math.Pow(t, 3) + 3 * Math.Pow(t, 2));
                 float h3 = (float)(Math.Pow(t, 3) - 2 * Math.Pow(t, 2) + t);
@@ -193,6 +219,33 @@ namespace TiltBrush
                     h2 * segment[2] +
                     h3 * tangents.Item1 +
                     h4 * tangents.Item2;
+            }
+
+            /// @brief Evaluate the first derivative of a cubic Hermite spline at a specified parameter t.
+            /// @param point1 The first control point of the spline.
+            /// @param point2 The second control point of the spline.
+            /// @param point3 The third control point of the spline.
+            /// @param point4 The fourth control point of the spline.
+            /// @param t The parameter at which to evaluate the first derivative (range [0,1]).
+            /// @return The first derivative of the spline at parameter t.
+            public static Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
+            {
+
+                (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
+
+                // First derivatives of hermnite basis functions
+                float h1 = (float)(6 * Math.Pow(t, 2) - 6 * Math.Pow(t, 1));
+                float h2 = (float)((-6) * Math.Pow(t, 2) + 6 * Math.Pow(t, 1));
+                float h3 = (float)(3 * Math.Pow(t, 2) - 4 * Math.Pow(t, 1) + 1);
+                float h4 = (float)(3 * Math.Pow(t, 2) - 2 * Math.Pow(t, 1));
+
+                Vector3 newPoint =
+                    h1 * segment[1] +
+                    h2 * segment[2] +
+                    h3 * tangents.Item1 +
+                    h4 * tangents.Item2;
+
+                return newPoint;
             }
 
             /// @brief Computes the local parameter within a curve segment based on the given time parameter.
