@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,20 +24,14 @@ namespace TiltBrush
     /// This class serves as the base for other partial classes and derives from MarkovPenTool.
     public partial class MarkovPen 
     {
-        private Mapping m_ExampleMapping;
+        private readonly Mapping m_ExampleMapping;
         private Mapping m_TargetMapping = new();
-        private SynthesisEngine m_SynthesisEngine= new();
-
-        private Curve m_ExampleStyleCurve;
-        private Curve m_TargetStyleCurve;
-
-        private BasePath m_ExampleBaseCurve;
-        private BasePath m_TargetBaseCurve;
+        private readonly SynthesisEngine m_SynthesisEngine = new();
 
         /// @brief Constuct a MarkovPen instance
         /// 
         /// @param basePathControlPoints - Control Points of the Base Path
-        /// @param styleCurveControlPoints - Control points of the Style Curve 
+        /// @param styleCurveControlPoints - Control points of the Style Curve
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
@@ -45,13 +40,6 @@ namespace TiltBrush
             Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
 
             m_ExampleMapping = new Mapping(basePath, styleCurve);
-        }
-
-        /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
-        /// @param exampleMapping A Mapping computed from the example curves.
-        public void Initialize(Mapping exampleMapping)
-        {
-            m_ExampleMapping = exampleMapping;
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
@@ -64,26 +52,17 @@ namespace TiltBrush
             return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
         }
 
-        /// @brief Discard the current target curve so the next stroke starts fresh.
-        ///
-        /// Called on trigger-down to reset the growing target base/style curve between strokes.
+        /// @brief Discard the current target mapping and start a fresh one
+        /// @note Called on trigger-down
         public void NewLine()
         {
             m_TargetMapping = new Mapping();
         }
 
-        /// @brief Checks whether the MarkovPen is trained (example mapping present).
-        /// @return True if the MarkovPen is trained; otherwise false.
         public bool IsTrained()
         {
             return m_ExampleMapping != null;
         }
 
-        /// @brief Clears the MarkovPen state by nullifying the synthesizer and example mapping.
-        public void Clear()
-        {
-            m_SynthesisEngine = null;
-            m_ExampleMapping = null;
-        }
     }
 }

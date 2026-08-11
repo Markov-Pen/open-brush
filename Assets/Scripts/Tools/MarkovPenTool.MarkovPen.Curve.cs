@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace TiltBrush
 
             private const float k_Responsiveness = 1f;
 
-            private float m_Responsiveness = k_Responsiveness;
+            private readonly float m_Responsiveness;
 
             /// @brief Constructor for the style curve; initializes the first arc length position.
             /// @param responsiveness Responsiveness parameter controlling smoothing (default: 1).
@@ -55,6 +56,14 @@ namespace TiltBrush
                 Finish();
             }
 
+            /// @brief Check if the curve has been fully processed and finalized.
+            /// @return True if the curve is finished, otherwise false.
+            public bool IsFinished()
+            {
+                return m_ControlPoints.Count >= 2 &&
+                    m_ArcLengthPositions.Count == m_ControlPoints.Count;
+            }
+            
             /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
             /// If the curve is empty, the control point is directly added. If it's the first control point,
             /// it is stored as the last input for future interpolation. For subsequent points, the method uses
@@ -305,15 +314,7 @@ namespace TiltBrush
                     ComputeArcLength(m_ControlPoints.Count - 2));
             }
 
-            /// @brief Check if the curve has been fully processed and finalized.
-            /// @return True if the curve is finished, otherwise false.
-            public bool IsFinished()
-            {
-                return m_ControlPoints.Count >= 2 &&
-                       m_ArcLengthPositions.Count == m_ControlPoints.Count;
-            }
-
-            public static Vector3 orthogonal(Vector3 v)
+            public static Vector3 Orthogonal(Vector3 v)
             {
                 return new Vector3(-v.y, v.x);
             }

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,9 +28,9 @@ namespace TiltBrush
         public class Mapping
         {
             //Curves
-            private BasePath m_BasePath;
+            private readonly BasePath m_BasePath;
 
-            private Curve m_StyleCurve;
+            private readonly Curve m_StyleCurve;
 
             //SamplingInterval
             private const float k_SamplingInterval = 0.025f;
@@ -99,11 +100,52 @@ namespace TiltBrush
                 return m_Mapping.Last();
             }
 
+            /// @brief Check if the mapping is empty.
+            /// @return True if the mapping is empty; otherwise false.
+            public bool IsEmpty()
+            {
+                return m_Mapping.Count == 0;
+            }
+
+            /// @brief Gets the maximum offset associated with the mapping instance.
+            public float MaxOffsetAlongNormals => m_MaxOffset;
+
+            /// @brief Gets the association at the specified index.
+            /// @param index The index of the association to retrieve.
+            /// @return A Vector2 representing the association (x = arc length position, y = offset).
+            public Vector2 GetAssociation(int index)
+            {
+                return m_Mapping[index];
+            }
+
+            /// @brief Sets the tap of the base path to the computed max offset.
+            /// @param offset The max offset to set as tap.
+            public void SetMaxOffsetAlongNormals(float offset)
+            {
+                m_BasePath.Tap = offset;
+            }
+
             public void AddBasePoint(Vector3 point, Vector3 upVector)
             {
                 m_BasePath.AddControlPoint(point, upVector);
             }
 
+            /// @brief Check if the mapping is configured as repetitive.
+            /// @return True if the mapping is considered repetitive.
+            public bool IsRepetitive()
+            {
+                return true;
+            }
+
+            /// @brief Get the offsets for a given index in the mapping.
+            /// @param index The index for which offsets are requested.
+            /// @return A Vector2 containing the offset values.
+            public Vector2 GetOffsets(int index)
+            {
+                return new Vector2(
+                    m_OffsetsAlongBasePath[index],
+                    m_Mapping[index].y);
+            }
 
             /// @brief Compute the sampling interval to evenly sample the arc length of the style curve.
             /// @return The computed sampling interval.
@@ -177,7 +219,6 @@ namespace TiltBrush
 
                     m_Mapping.Add(
                         new Vector2(projections[i], offsetAlongNormal));
-                        
                 }
             }
 
@@ -222,20 +263,6 @@ namespace TiltBrush
                 }
             }
 
-            /// @brief Sets the tap of the base path to the computed max offset.
-            /// @param offset The max offset to set as tap.
-            public void SetMaxOffsetAlongNormals(float offset)
-            {
-                m_BasePath.Tap = offset;
-            }
-
-            /// @brief Check if the mapping is configured as repetitive.
-            /// @return True if the mapping is considered repetitive.
-            public bool IsRepetitive()
-            {
-                return true;
-            }
-
             /// @brief Inflate an association of the mapping to obtain a tuple of 3D points (base point and inflated point).
             /// @param association The 2D association containing arc length position and offset.
             /// @return A tuple of two Vector3 points representing the inflated segment.
@@ -258,16 +285,6 @@ namespace TiltBrush
                 return new Tuple<Vector3, Vector3>(
                     basePoint,
                     basePoint + toPoint);
-            }
-
-            /// @brief Get the offsets for a given index in the mapping.
-            /// @param index The index for which offsets are requested.
-            /// @return A Vector2 containing the offset values.
-            public Vector2 GetOffsets(int index)
-            {
-                return new Vector2(
-                    m_OffsetsAlongBasePath[index],
-                    m_Mapping[index].y);
             }
 
             /// @brief Apply offsets to the mapping at a specific index and update the style curve.
@@ -297,24 +314,6 @@ namespace TiltBrush
                 LastIndex = index;
 
                 return true;
-            }
-
-            /// @brief Check if the mapping is empty.
-            /// @return True if the mapping is empty; otherwise false.
-            public bool IsEmpty()
-            {
-                return m_Mapping.Count == 0;
-            }
-
-            /// @brief Gets the maximum offset associated with the mapping instance.
-            public float MaxOffsetAlongNormals => m_MaxOffset;
-
-            /// @brief Gets the association at the specified index.
-            /// @param index The index of the association to retrieve.
-            /// @return A Vector2 representing the association (x = arc length position, y = offset).
-            public Vector2 GetAssociation(int index)
-            {
-                return m_Mapping[index];
             }
         }
     }

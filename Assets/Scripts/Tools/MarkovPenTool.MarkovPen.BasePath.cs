@@ -31,15 +31,9 @@ namespace TiltBrush
         {
             public float Tap = 0f;
 
-            private List<Vector3> m_UpVectors = new();
+            private readonly List<Vector3> m_UpVectors = new();
 
-            private List<Vector3> m_SmoothNormals = new();
-
-            // Last normal computed, used to keep the sign continuous between
-            // consecutive synthesis queries so the styled offset never flips to the other side of
-            // the curve (which shows up as ~2x-offset jumps in the stroke).
-            // @note Zero = uninitialized.
-            private Vector3 m_LastSmoothNormal = Vector3.zero;
+            private readonly List<Vector3> m_SmoothNormals = new();
 
             /// @brief Construct a target base path
             public BasePath(float responsiveness = 0.75f) : base(responsiveness)
@@ -51,7 +45,7 @@ namespace TiltBrush
             /// @params List<Vector3> controlPoints - control points forming base path in OpenBrush
             public BasePath(List<Vector3> controlPoints)
             {
-                Vector3 upVector = orthogonal(controlPoints.Last() - controlPoints.First()).normalized;
+                Vector3 upVector = Orthogonal(controlPoints.Last() - controlPoints.First()).normalized;
 
                 AddControlPoint(controlPoints.First(), upVector);
                 AddControlPoint(controlPoints.Last(), upVector);
