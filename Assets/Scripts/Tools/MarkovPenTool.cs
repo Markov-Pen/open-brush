@@ -26,7 +26,7 @@ namespace TiltBrush
     /// 
     public class MarkovPenTool : FreePaintTool
     {
-        private static MarkovPen m_MarkovPen = null;
+        private static MarkovPen m_MarkovPen;
 
         Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 

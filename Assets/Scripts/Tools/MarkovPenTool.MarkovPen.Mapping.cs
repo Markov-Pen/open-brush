@@ -25,70 +25,14 @@ namespace TiltBrush
         /// @brief Represents a mapping between arc length positions and offsets from style curve to base path.
         ///
         /// Samples the style curve, projects samples onto the base path, and computes mapping and offsets.
-        public class Mapping
+        public abstract class Mapping
         {
-            //Curves
-            private readonly BasePath m_BasePath;
-
-            private readonly Curve m_StyleCurve;
-
-            //SamplingInterval
-            private const float k_SamplingInterval = 0.025f;
-
-            private float m_SamplingInterval = k_SamplingInterval;
+            // Curves
+            protected BasePath m_BasePath;
+            protected Curve m_StyleCurve;
 
             //Mapping
-            private List<Vector2> m_Mapping = new();
-
-            //Offsets
-            private List<float> m_OffsetsAlongBasePath;
-
-            private float m_MaxOffset;
-
-            public int LastIndex { get; private set; }
-
-            public Mapping()
-            {
-                LastIndex = -1;
-                m_BasePath = new BasePath();
-                m_StyleCurve = new Curve();
-            }
-
-            /// @brief Constructor for the Mapping class.
-            /// @param styleCurve The style curve for the mapping.
-            /// @param basePath The base path for the mapping.
-            /// @exception NullReferenceException Thrown if styleCurve or basePath is null.
-            public Mapping(BasePath basePath, Curve styleCurve)
-            {
-                Debug.Log("MarkovPen: compute Mapping");
-
-                LastIndex = -1;
-
-                m_BasePath = basePath;
-                m_StyleCurve = styleCurve;
-
-                // Compute sampling interval
-                float samplingInterval = ComputeSamplingInterval();
-                Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
-
-                // Sample style curve
-                List<Vector3> samples = SampleStyleCurve(samplingInterval);
-
-                // Project samples onto base path
-                List<float> projections = Project(samples);
-
-                // Compute mapping
-                ComputeMapping(samples, projections);
-
-                // Compute maximum offset
-                ComputeMaxOffsetInNormalDirection();
-                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + MaxOffsetAlongNormals);
-                
-                // Compute offsets along base path
-                ComputeOffsetsAlongBasePath();
-
-                Debug.Log("MarkovPen: Mapping size: " + m_Mapping.Count);
-            }
+            protected List<Vector2> m_Mapping = new();
 
             public int Size()
             {
@@ -107,9 +51,6 @@ namespace TiltBrush
                 return m_Mapping.Count == 0;
             }
 
-            /// @brief Gets the maximum offset associated with the mapping instance.
-            public float MaxOffsetAlongNormals => m_MaxOffset;
-
             /// @brief Gets the association at the specified index.
             /// @param index The index of the association to retrieve.
             /// @return A Vector2 representing the association (x = arc length position, y = offset).
@@ -117,17 +58,50 @@ namespace TiltBrush
             {
                 return m_Mapping[index];
             }
+        }
 
-            /// @brief Sets the tap of the base path to the computed max offset.
-            /// @param offset The max offset to set as tap.
-            public void SetMaxOffsetAlongNormals(float offset)
-            {
-                m_BasePath.Tap = offset;
-            }
+        public class ExampleMapping : Mapping
+        {
+            // Sampling interval
+            private const float k_SamplingInterval = 0.025f;
+            private float m_SamplingInterval = k_SamplingInterval;
 
-            public void AddBasePoint(Vector3 point, Vector3 upVector)
+            // Offsets along base path
+            private List<float> m_OffsetsAlongBasePath;
+
+            /// @brief Constructor for the Mapping class.
+            /// @param styleCurve The style curve for the mapping.
+            /// @param basePath The base path for the mapping.
+            /// @exception NullReferenceException Thrown if styleCurve or basePath is null.
+            public ExampleMapping(BasePath basePath, Curve styleCurve)
             {
-                m_BasePath.AddControlPoint(point, upVector);
+                Debug.Log("MarkovPen: compute Mapping");
+
+                m_BasePath = basePath;
+                m_StyleCurve = styleCurve;
+
+                // Compute sampling interval
+                float samplingInterval = ComputeSamplingInterval();
+                Debug.Log("MarkovPen: Sampling interval on style curve: " + samplingInterval);
+
+                // Sample style curve
+                List<Vector3> samples = SampleStyleCurve(samplingInterval);
+
+                // Project samples onto base path
+                List<float> projections = Project(samples);
+
+                // Compute mapping
+                ComputeMapping(samples, projections);
+
+                // Compute maximum offset
+                float maxOffsetAlongNormals = ComputeMaxOffsetInNormalDirection();
+                basePath.Smooth(maxOffsetAlongNormals);
+                Debug.Log("MarkovPen: Filter tap for normal smoothing: " + maxOffsetAlongNormals);
+
+                // Compute offsets along base path
+                ComputeOffsetsAlongBasePath();
+
+                Debug.Log("MarkovPen: Mapping size: " + m_Mapping.Count);
             }
 
             /// @brief Check if the mapping is configured as repetitive.
@@ -145,6 +119,11 @@ namespace TiltBrush
                 return new Vector2(
                     m_OffsetsAlongBasePath[index],
                     m_Mapping[index].y);
+            }
+
+            public float GetMaxOffsetAlongNormals()
+            {
+                return m_BasePath.Tap;
             }
 
             /// @brief Compute the sampling interval to evenly sample the arc length of the style curve.
@@ -183,7 +162,7 @@ namespace TiltBrush
             public List<float> Project(List<Vector3> samples)
             {
                 List<float> projections = new List<float>();
-                
+
                 foreach (var sample in samples)
                 {
                     float projection = m_BasePath.Project(sample)[0];
@@ -223,15 +202,17 @@ namespace TiltBrush
             }
 
             /// @brief Compute the maximal offset from the associations in the mapping.
-            private void ComputeMaxOffsetInNormalDirection()
+            private float ComputeMaxOffsetInNormalDirection()
             {
-                m_MaxOffset = 0;
+                float maxOffset = 0;
 
                 foreach (var association in m_Mapping)
                 {
-                    m_MaxOffset =
-                        Math.Max(m_MaxOffset, Math.Abs(association.y));
+                    maxOffset =
+                        Math.Max(maxOffset, Math.Abs(association.y));
                 }
+
+                return maxOffset;
             }
 
             /// @brief Compute the offsets by iterating through the mapping and provide repetition handling.
@@ -255,12 +236,29 @@ namespace TiltBrush
                     m_OffsetsAlongBasePath.Insert(
                         0,
                         m_OffsetsAlongBasePath.Last());
-                    
+
                     // Remove last point and offset
                     m_OffsetsAlongBasePath.RemoveAt(
                         m_OffsetsAlongBasePath.Count - 1);
                     m_Mapping.RemoveAt(m_Mapping.Count - 1);
                 }
+            }
+        }
+
+        public class TargetMapping : Mapping
+        {
+            public int LastIndex { get; private set; }
+
+            public TargetMapping(float maxOffsetAlongNormals)
+            {
+                LastIndex = -1;
+                m_BasePath = new BasePath(maxOffsetAlongNormals);
+                m_StyleCurve = new Curve();
+            }
+
+            public void AddBasePoint(Vector3 point, Vector3 upVector)
+            {
+                m_BasePath.AddControlPoint(point, upVector);
             }
 
             /// @brief Inflate an association of the mapping to obtain a tuple of 3D points (base point and inflated point).

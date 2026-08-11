@@ -33,14 +33,8 @@ namespace TiltBrush
             /// @param target_mapping The target mapping to populate
             /// @return A list of control points on the target style curve
             /// and the associated rotation of the controller
-            public List<Tuple<Vector3, Quaternion>> Reconstruct(Mapping exampleMapping, Mapping targetMapping)
+            public List<Tuple<Vector3, Quaternion>> Reconstruct(ExampleMapping exampleMapping, TargetMapping targetMapping)
             {
-                float offset = exampleMapping.MaxOffsetAlongNormals;
-
-                if (targetMapping.IsEmpty())
-                {
-                    targetMapping.SetMaxOffsetAlongNormals(offset);
-                }
 
                 int index = (targetMapping.LastIndex + 1) % exampleMapping.Size();
 

@@ -29,15 +29,16 @@ namespace TiltBrush
         /// additional features such as projection, spline functionalities, and smoothing functionalities.
         public class BasePath : Curve
         {
-            public float Tap = 0f;
+            public float Tap { get; private set; }
 
             private readonly List<Vector3> m_UpVectors = new();
 
             private readonly List<Vector3> m_SmoothNormals = new();
 
             /// @brief Construct a target base path
-            public BasePath(float responsiveness = 0.75f) : base(responsiveness)
+            public BasePath(float maxOffsetAlongNormals, float responsiveness = 0.75f) : base(responsiveness)
             {
+                Tap = maxOffsetAlongNormals;
             }
 
             /// @brief Construct an exmple base path
@@ -100,6 +101,11 @@ namespace TiltBrush
                 }
 
                 return m_ArcLengthPositions[Math.Max(m_SmoothNormals.Count - 1, 0)];
+            }
+
+            public void Smooth(float tap)
+            {
+                Tap = tap;
             }
 
             /// @brief Computes a smoothed tangent vector based on the specified center position.

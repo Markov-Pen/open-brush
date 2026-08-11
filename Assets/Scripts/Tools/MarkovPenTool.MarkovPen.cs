@@ -24,8 +24,8 @@ namespace TiltBrush
     /// This class serves as the base for other partial classes and derives from MarkovPenTool.
     public partial class MarkovPen 
     {
-        private readonly Mapping m_ExampleMapping;
-        private Mapping m_TargetMapping = new();
+        private readonly ExampleMapping m_ExampleMapping;
+        private TargetMapping m_TargetMapping;
         private readonly SynthesisEngine m_SynthesisEngine = new();
 
         /// @brief Constuct a MarkovPen instance
@@ -39,7 +39,8 @@ namespace TiltBrush
             Curve styleCurve = new Curve(styleCurveControlPoints);
             Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
 
-            m_ExampleMapping = new Mapping(basePath, styleCurve);
+            m_ExampleMapping = new ExampleMapping(basePath, styleCurve);
+            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
@@ -56,7 +57,7 @@ namespace TiltBrush
         /// @note Called on trigger-down
         public void NewLine()
         {
-            m_TargetMapping = new Mapping();
+            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
         public bool IsTrained()
