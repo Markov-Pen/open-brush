@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
 namespace TiltBrush
@@ -36,7 +37,8 @@ namespace TiltBrush
 
             // Last normal computed, used to keep the sign continuous between
             // consecutive synthesis queries so the styled offset never flips to the other side of
-            // the curve (which shows up as ~2x-offset jumps in the stroke). Zero = uninitialized.
+            // the curve (which shows up as ~2x-offset jumps in the stroke).
+            // @note Zero = uninitialized.
             private Vector3 m_LastSmoothNormal = Vector3.zero;
 
             /// @brief Construct a target base path
@@ -49,8 +51,7 @@ namespace TiltBrush
             /// @params List<Vector3> controlPoints - control points forming base path in OpenBrush
             public BasePath(List<Vector3> controlPoints)
             {
-                Vector3 upVector = controlPoints.Last() - controlPoints.First();
-                upVector = new Vector3(-upVector.y, upVector.x, 0.0f).normalized;
+                Vector3 upVector = orthogonal(controlPoints.Last() - controlPoints.First()).normalized;
 
                 AddControlPoint(controlPoints.First(), upVector);
                 AddControlPoint(controlPoints.Last(), upVector);
@@ -87,6 +88,24 @@ namespace TiltBrush
                         m_SmoothNormals[^1] *= -1;
                     }
                 }
+            }
+
+            /// @brief Compute the total arc length of the curve.
+            /// Returns the last precomputed arc length position if enough data exists.
+            /// @return The total arc length of the curve.
+            public override float ArcLength()
+            {
+                if (Tap == 0)
+                {
+                    return base.ArcLength();
+                }
+
+                if (m_UpVectors.Count < 4)
+                {
+                    return 0;
+                }
+
+                return m_ArcLengthPositions[Math.Max(m_SmoothNormals.Count - 1, 0)];
             }
 
             /// @brief Computes a smoothed tangent vector based on the specified center position.
@@ -184,7 +203,7 @@ namespace TiltBrush
                                 m_SmoothNormals[index + 2].normalized,
                         };
 
-                        normal = Interpolate(segment, SegmentT(t));
+                        normal = Interpolate(segment, SegmentTime(t));
                 }
 
                 normal = normal.normalized;
@@ -196,29 +215,12 @@ namespace TiltBrush
                 if (m_LastSmoothNormal != Vector3.zero &&
                     Vector3.Dot(normal, m_LastSmoothNormal) < 0f)
                 {
+                    Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     normal = -normal;
                 }
                 m_LastSmoothNormal = normal;
 
                 return normal;
-            }
-
-            /// @brief Compute the total arc length of the curve.
-            /// Returns the last precomputed arc length position if enough data exists.
-            /// @return The total arc length of the curve.
-            public override float ArcLength()
-            {
-                if (Tap == 0)
-                {
-                    return base.ArcLength();
-                }
-                
-                if (m_UpVectors.Count < 4)
-                {
-                    return 0;
-                }
-
-                return m_ArcLengthPositions[Math.Max(m_SmoothNormals.Count - 1, 0)];
             }
 
             /// @brief Retrieve the tangent vector at a specified arc length along the curve.
@@ -243,7 +245,7 @@ namespace TiltBrush
 
                 Vector3[] segment = GetSegmentPositions(SegmentIndex(t));
 
-                return EvaluateFirstDerivative(segment, SegmentT(t));
+                return EvaluateFirstDerivative(segment, SegmentTime(t));
             }
 
             /// @brief Project a point onto the curve and return the arc length positions of the projections.
@@ -253,19 +255,20 @@ namespace TiltBrush
             {
                 List<float> projections = new List<float>();
 
+                // If the curve is a straight line, just project on that
                 if(m_ControlPoints.Count == 2)
                 {
                     Vector3 tangentDirection =
-                    Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
+                        Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
 
-                    Vector3 normal = new Vector3(-tangentDirection.y, tangentDirection.x, 0f);
-
-                    Vector3 toPoint = toProject - m_ControlPoints[0];   
+                    Vector3 toPoint = toProject - m_ControlPoints[0];  
+                    
                     projections.Add(Vector3.Dot(toPoint, tangentDirection));
 
                     return projections;
                 }
 
+                // Try to project on each segment
                 for (int index = 1; index < m_ArcLengthPositions.Count; ++index)
                 {
 
@@ -276,6 +279,7 @@ namespace TiltBrush
                         projections);
                 }
 
+                // If no projection has been found, project on tangent of first or last point
                 if (projections.Count == 0)
                 {
                     if (Vector3.Distance(toProject, m_ControlPoints[0]) <
@@ -378,8 +382,7 @@ namespace TiltBrush
             {
                 base.Finish();
 
-                for (
-                    int index = m_SmoothNormals.Count;
+                for (int index = m_SmoothNormals.Count;
                     index < m_ControlPoints.Count;
                     index++)
                 {
