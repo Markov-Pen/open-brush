@@ -34,16 +34,16 @@ namespace TiltBrush
             /// and the associated rotation of the controller
             public List<Tuple<Vector3, Quaternion>> Reconstruct(Mapping exampleMapping, Mapping targetMapping)
             {
-                float offset = exampleMapping.MaxOffset;
+                float offset = exampleMapping.MaxOffsetAlongNormals;
 
                 if (targetMapping.IsEmpty())
                 {
-                    targetMapping.SetMaxOffset(offset);
+                    targetMapping.SetMaxOffsetAlongNormals(offset);
                 }
 
-                int index = (targetMapping.LastIndex + 1) % exampleMapping.GetMapping.Count;
+                int index = (targetMapping.LastIndex + 1) % exampleMapping.Size();
 
-                List<Tuple<Vector3, Quaternion>> pointers = new List<Tuple<Vector3, Quaternion>>();
+                List<Tuple<Vector3, Quaternion>> generatedPoints = new List<Tuple<Vector3, Quaternion>>();
 
                 while (true)
                 {
@@ -54,14 +54,14 @@ namespace TiltBrush
                         break;
                     }
 
-                    Vector2 association = targetMapping.GetAssociation(targetMapping.GetMapping.Count - 1);
+                    Vector2 association = targetMapping.Last();
                     Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
-                    pointers.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
+                    generatedPoints.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
 
-                    index = (index + 1) % exampleMapping.GetMapping.Count;
+                    index = (index + 1) % exampleMapping.Size();
                 }
 
-                return pointers;
+                return generatedPoints;
             }
         }
     }
