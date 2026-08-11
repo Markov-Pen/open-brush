@@ -189,17 +189,6 @@ namespace TiltBrush
                 return new[] { point1, point2, point3, point4 };
             }
 
-            /// @brief Calculate the tangent vector at a given point using cubic Hermite interpolation factors.
-            /// @param segment The segment consisting of four control points
-            /// @param tension The tension factor for interpolation.
-            /// @param continuity The continuity factor for interpolation.
-            /// @param bias The bias factor for interpolation.
-            /// @return The computed tangent vector at the given point.
-            protected static (Vector3, Vector3) ComputeTangentsAtEndpoints(Vector3[] segment)
-            {
-                return ((segment[2] - segment[0]) / 2, (segment[3] - segment[1]) / 2);
-            }
-
             /// @brief Perform cubic Hermite interpolation to calculate the position on the curve.
             /// @param segment The segment consisting of four control points
             /// @param t The parameter value for interpolation.
@@ -246,6 +235,17 @@ namespace TiltBrush
                     h4 * tangents.Item2;
 
                 return newPoint;
+            }
+
+            /// @brief Calculate the tangent vector at a given point using cubic Hermite interpolation factors.
+            /// @param segment The segment consisting of four control points
+            /// @param tension The tension factor for interpolation.
+            /// @param continuity The continuity factor for interpolation.
+            /// @param bias The bias factor for interpolation.
+            /// @return The computed tangent vector at the given point.
+            protected static (Vector3, Vector3) ComputeTangentsAtEndpoints(Vector3[] segment)
+            {
+                return ((segment[2] - segment[0]) / 2, (segment[3] - segment[1]) / 2);
             }
 
             /// @brief Computes the local parameter within a curve segment based on the given time parameter.

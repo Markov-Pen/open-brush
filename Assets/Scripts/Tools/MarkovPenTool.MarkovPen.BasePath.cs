@@ -108,6 +108,40 @@ namespace TiltBrush
                 Tap = tap;
             }
 
+            /// @brief Retrieve the smoothed normal vector at a specified arc length along the curve.
+            /// Uses cubic Hermite interpolation between precomputed smooth normals.
+            /// @param l The arc length at which to retrieve the smoothed normal vector.
+            /// @return The computed smoothed normal vector at the specified arc length.
+            public Vector3 SmoothNormalAt(float l)
+            {
+                if (l <= 0)
+                {
+                    return m_SmoothNormals[0];
+                }
+
+                if (l >= m_ArcLengthPositions.Last())
+                {
+                    return m_SmoothNormals.Last();
+                }
+
+                float t = TimeAt(l);
+                int index = SegmentIndex(t);
+
+                Vector3[] smoothNormals =
+                {
+                    index == 0 ?
+                        m_SmoothNormals[0] :
+                        m_SmoothNormals[index - 1].normalized,
+                    m_SmoothNormals[index].normalized,
+                    m_SmoothNormals[index + 1].normalized,
+                    index == m_SmoothNormals.Count - 2 ?
+                        m_SmoothNormals[index + 1].normalized :
+                        m_SmoothNormals[index + 2].normalized,
+                };
+
+                return Interpolate(smoothNormals, SegmentTime(t));
+            }
+
             /// @brief Computes a smoothed tangent vector based on the specified center position.
             /// Averages the normalized first derivatives at positions within a window around the given center.
             /// @param center The center position around which the smoothed tangent is calculated.
@@ -142,41 +176,6 @@ namespace TiltBrush
 
                 // make up vector perpendicular to smoot tangent
                 return (upVector - smoothTangentDirection * projection).normalized;
-            }
-
-            /// @brief Retrieve the smoothed normal vector at a specified arc length along the curve.
-            /// Uses cubic Hermite interpolation between precomputed smooth normals.
-            /// @param l The arc length at which to retrieve the smoothed normal vector.
-            /// @return The computed smoothed normal vector at the specified arc length.
-            public Vector3 SmoothNormalAt(float l)
-            {
-                if (l <= 0)
-                {
-                    return m_SmoothNormals[0];
-                }
-                
-                if (l >= m_ArcLengthPositions.Last())
-                {
-                    return m_SmoothNormals.Last();
-                }
-
-                float t = TimeAt(l);
-                int index = SegmentIndex(t);
-
-                Vector3[] smoothNormals =
-                {
-                    index == 0 ?
-                        m_SmoothNormals[0] :
-                        m_SmoothNormals[index - 1].normalized,
-                    m_SmoothNormals[index].normalized,
-                    m_SmoothNormals[index + 1].normalized,
-                    index == m_SmoothNormals.Count - 2 ?
-                        m_SmoothNormals[index + 1].normalized :
-                        m_SmoothNormals[index + 2].normalized,
-                };
-
-                return Interpolate(smoothNormals, SegmentTime(t));
-                
             }
 
             /// @brief Project a point onto the curve and return the arc length positions of the projections.
