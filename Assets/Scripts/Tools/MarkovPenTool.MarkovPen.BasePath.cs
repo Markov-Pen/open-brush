@@ -176,51 +176,33 @@ namespace TiltBrush
             /// @return The computed smoothed normal vector at the specified arc length.
             public Vector3 SmoothNormalAt(float l)
             {
-                Vector3 normal;
-
                 if (l <= 0)
                 {
-                    normal = m_SmoothNormals[0];
+                    return m_SmoothNormals[0];
                 }
-                else if (l >= m_ArcLengthPositions.Last())
+                
+                if (l >= m_ArcLengthPositions.Last())
                 {
-                    normal = m_SmoothNormals.Last();
+                    return m_SmoothNormals.Last();
                 }
-                else
+
+                float t = TimeAt(l);
+                int index = SegmentIndex(t);
+
+                Vector3[] smoothNormals =
                 {
-                    float t = TimeAt(l);
+                    index == 0 ?
+                        m_SmoothNormals[0] :
+                        m_SmoothNormals[index - 1].normalized,
+                    m_SmoothNormals[index].normalized,
+                    m_SmoothNormals[index + 1].normalized,
+                    index == m_SmoothNormals.Count - 2 ?
+                        m_SmoothNormals[index + 1].normalized :
+                        m_SmoothNormals[index + 2].normalized,
+                };
 
-                    int index = SegmentIndex(t);
-                        Vector3[] segment =
-                        {
-                            index == 0 ?
-                                m_SmoothNormals[0] :
-                                m_SmoothNormals[index - 1].normalized,
-                            m_SmoothNormals[index].normalized,
-                            m_SmoothNormals[index + 1].normalized,
-                            index == m_SmoothNormals.Count - 2 ?
-                                m_SmoothNormals[index + 1].normalized :
-                                m_SmoothNormals[index + 2].normalized,
-                        };
-
-                        normal = Interpolate(segment, SegmentTime(t));
-                }
-
-                normal = normal.normalized;
-
-                // Keep the normal on a consistent side between consecutive queries. The interpolated
-                // normal can flip sign as the curve grows; since the example offsets sit on one side,
-                // a flip throws the styled point across the curve (~2x-offset jump). Match the sign of
-                // the previous normal to stay smooth.
-                if (m_LastSmoothNormal != Vector3.zero &&
-                    Vector3.Dot(normal, m_LastSmoothNormal) < 0f)
-                {
-                    Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                    normal = -normal;
-                }
-                m_LastSmoothNormal = normal;
-
-                return normal;
+                return Interpolate(smoothNormals, SegmentTime(t));
+                
             }
 
             /// @brief Retrieve the tangent vector at a specified arc length along the curve.
