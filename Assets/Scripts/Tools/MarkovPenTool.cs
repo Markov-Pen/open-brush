@@ -19,7 +19,6 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-
     /// @brief Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
     ///        Until the Markov synthesis is implemented every method delegates to FreePaintTool,
     ///        so the tool behaves identically to plain free-hand drawing.
@@ -27,7 +26,7 @@ namespace TiltBrush
     /// 
     public class MarkovPenTool : FreePaintTool
     {
-        private static MarkovPen m_MarkovPen = null;
+        private static MarkovPen m_MarkovPen;
 
         Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 
@@ -59,7 +58,7 @@ namespace TiltBrush
                 base.UpdateTool();
                 return;
             }
-
+            
             bool triggerDown = InputManager.Brush.GetCommandDown(InputManager.SketchCommands.Activate);
 
             if (triggerDown)

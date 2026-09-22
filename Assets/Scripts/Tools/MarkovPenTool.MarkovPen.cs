@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,20 +24,14 @@ namespace TiltBrush
     /// This class serves as the base for other partial classes and derives from MarkovPenTool.
     public partial class MarkovPen 
     {
-        private Mapping m_ExampleMapping;
-        private Mapping m_TargetMapping = new();
-        private Synthesizer m_Synthesizer;
-
-        private Curve m_ExampleStyleCurve;
-        private Curve m_TargetStyleCurve;
-
-        private BasePath m_ExampleBaseCurve;
-        private BasePath m_TargetBaseCurve;
+        private readonly ExampleMapping m_ExampleMapping;
+        private TargetMapping m_TargetMapping;
+        private readonly SynthesisEngine m_SynthesisEngine = new();
 
         /// @brief Constuct a MarkovPen instance
         /// 
         /// @param basePathControlPoints - Control Points of the Base Path
-        /// @param styleCurveControlPoints - Control points of the Style Curve 
+        /// @param styleCurveControlPoints - Control points of the Style Curve
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
@@ -44,50 +39,31 @@ namespace TiltBrush
             Curve styleCurve = new Curve(styleCurveControlPoints);
             Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
 
-            m_ExampleMapping = new Mapping(basePath, styleCurve);
-            m_Synthesizer = new Synthesizer(m_ExampleMapping);
-        }
-
-        /// @brief Initializes the MarkovPen with an example mapping used for synthesis.
-        /// @param exampleMapping A Mapping computed from the example curves.
-        public void Initialize(Mapping exampleMapping)
-        {
-            m_ExampleMapping = exampleMapping;
-
-            m_Synthesizer = new Synthesizer(m_ExampleMapping);
+            m_ExampleMapping = new ExampleMapping(basePath, styleCurve);
+            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
         /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
-        /// @param targetMapping A Mapping representing the growing target base curve and an empty target style curve.
+        /// @param targetMapping A Mapping representing the growing target base path and an empty target style curve.
         /// @return A list of reconstructed point pairs on the target curve.
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
-            // Debug.Log("MarkovPen: Up vector: " + pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
-            m_TargetMapping.BaseCurve.AddControlPoint(pointer.position, pointer.rotation* new Vector3(0.0f,1.0f,0.0f));
+            m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
         
-            return m_Synthesizer.Reconstruct(m_TargetMapping);
+            return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
         }
 
-        /// @brief Discard the current target curve so the next stroke starts fresh.
-        ///
-        /// Called on trigger-down to reset the growing target base/style curve between strokes.
+        /// @brief Discard the current target mapping and start a fresh one
+        /// @note Called on trigger-down
         public void NewLine()
         {
-            m_TargetMapping = new Mapping();
+            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
-        /// @brief Checks whether the MarkovPen is trained (example mapping present).
-        /// @return True if the MarkovPen is trained; otherwise false.
         public bool IsTrained()
         {
             return m_ExampleMapping != null;
         }
 
-        /// @brief Clears the MarkovPen state by nullifying the synthesizer and example mapping.
-        public void Clear()
-        {
-            m_Synthesizer = null;
-            m_ExampleMapping = null;
-        }
     }
 }
