@@ -70,7 +70,7 @@ namespace TiltBrush
                     m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
 
-            /// @brief Add a control point to the curve and performs necessary updates.
+            /// @brief Add a control point to a target curve and performs necessary updates
             /// 
             /// @param controlPoint The new control point to be added.
             public void AddControlPoint(Vector3 controlPoint)
