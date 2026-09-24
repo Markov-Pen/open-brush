@@ -23,10 +23,10 @@ namespace TiltBrush
     public partial class MarkovPen
     { 
         /// @class BasePath
-        /// @brief Represents the base path of the MarkovPen.
+        /// @brief Represents the base path of a MarkovPen
         ///
         /// The BasePath class extends the functionality of the Curve class and provides
-        /// additional features such as projection, spline functionalities, and smoothing functionalities.
+        /// additional features such as projection and smoothing functionalities.
         public class BasePath : Curve
         {
             public float Tap { get; private set; }
@@ -35,15 +35,22 @@ namespace TiltBrush
 
             private readonly List<Vector3> m_SmoothNormals = new();
 
-            /// @brief Construct a target base path
-            public BasePath(float maxOffsetAlongNormals, float responsiveness = 0.75f) : base(responsiveness)
+            /// @brief Construct an empty BasePath instance
+            ///
+            /// Creates a new target base path with initially no knots and zero arc length.
+            ///
+            /// @param smoothingTap The tap (half window size) for normal smoothing
+            /// @param responsiveness Responsiveness parameter controlling Elasticurve smoothing (default: 0.75).
+            public BasePath(float smoothingTap, float responsiveness = 0.75f) : base(responsiveness)
             {
-                Tap = maxOffsetAlongNormals;
+                Tap = smoothingTap;
             }
 
-            /// @brief Construct an exmple base path
+            /// @brief Construct a BasePath instance from a set of control points
             ///
-            /// @params List<Vector3> controlPoints - control points forming base path in OpenBrush
+            /// Creates a fully initialized example base path
+            ///
+            /// @params List<Vector3> controlPoints Points forming the base path in OpenBrush
             public BasePath(List<Vector3> controlPoints)
             {
                 Vector3 upVector = Orthogonal(controlPoints.Last() - controlPoints.First()).normalized;
@@ -53,9 +60,11 @@ namespace TiltBrush
                 Finish();
             }
 
-            /// @brief Add a control point to the base path and update related information.
-            /// Extends the base class method to incorporate smoothing functionalities based on the tap value.
-            /// @param controlPoint The control point to be added to the base path.
+            /// @brief Add a control point to a target base path perform necessary updates
+            ///
+            /// Extends the base class method to incorporate smoothing of up vector and normals.
+            ///
+            /// @param controlPoint The new control point to be added.
             /// @param upVector The up vector associated with the control point.
             public void AddControlPoint(Vector3 controlPoint, Vector3 upVector)
             {
