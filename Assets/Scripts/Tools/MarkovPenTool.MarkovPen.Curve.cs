@@ -51,7 +51,7 @@ namespace TiltBrush
             /// 
             /// Creates a fully initialized example curve
             ///
-            /// @params controlPoints - points forming the curve in OpenBrush
+            /// @params controlPoints Points forming the curve in OpenBrush
             public Curve(List<Vector3> controlPoints): this()
             {
                 foreach (var point in controlPoints)
