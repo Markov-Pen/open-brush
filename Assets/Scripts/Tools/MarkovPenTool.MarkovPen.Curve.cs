@@ -38,7 +38,7 @@ namespace TiltBrush
 
             /// @brief Construct an empty Curve instance
             ///
-            /// Creates a target curve with initially no knots
+            /// Creates a target curve with initially no knots and zero arc length.
             ///
             /// @param responsiveness Responsiveness parameter controlling Elasticurve smoothing (default: 1 = no smoothing).
             public Curve(float responsiveness = k_Responsiveness)
