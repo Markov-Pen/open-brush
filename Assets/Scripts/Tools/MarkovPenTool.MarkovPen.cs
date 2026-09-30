@@ -19,19 +19,22 @@ using UnityEngine;
 namespace TiltBrush
 {
     /// @class MarkovPen
-    /// @brief The Markov Pen is a technique for generating character styles.
-    ///
-    /// This class serves as the base for other partial classes and derives from MarkovPenTool.
+    /// @brief Represents a Markov Pen, generating random sylization while drawing 
     public partial class MarkovPen 
     {
+        /// @brief Example mapping containing the user-given base path and style curve for training
         private readonly ExampleMapping m_ExampleMapping;
+        /// @brief The target mapping used for synthesis
         private TargetMapping m_TargetMapping;
+        /// @brief The synthesis engine creating new stylization
         private readonly SynthesisEngine m_SynthesisEngine = new();
 
-        /// @brief Constuct a MarkovPen instance
+        /// @brief Construct a MarkovPen instance
         /// 
-        /// @param basePathControlPoints - Control Points of the Base Path
-        /// @param styleCurveControlPoints - Control points of the Style Curve
+        /// Trains a Markov pen from an example style curve and base path.
+        /// 
+        /// @param basePathControlPoints Control points of the base path
+        /// @param styleCurveControlPoints Control points of the style curve
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
@@ -43,9 +46,14 @@ namespace TiltBrush
             m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
-        /// @brief Reconstructs the target mapping using the Synthesizer and returns the reconstructed points.
-        /// @param targetMapping A Mapping representing the growing target base path and an empty target style curve.
-        /// @return A list of reconstructed point pairs on the target curve.
+        /// @brief Reconstruct an example mapping one-to-one, producing a new target mapping
+        /// 
+        /// Exactly reproduces the example mapping along a target base path,
+        /// repeating it as needed to cover the entire arc length.
+        /// 
+        /// @param target_mapping The mapping to populate
+        /// 
+        /// @return The generated knots for the target style curve
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
             m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
@@ -54,12 +62,16 @@ namespace TiltBrush
         }
 
         /// @brief Discard the current target mapping and start a fresh one
+        /// 
         /// @note Called on trigger-down
         public void NewLine()
         {
             m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
+        /// @brief Check if the model has been trained
+        /// 
+        /// @return true if the model is trained, false otherwise
         public bool IsTrained()
         {
             return m_ExampleMapping != null;
