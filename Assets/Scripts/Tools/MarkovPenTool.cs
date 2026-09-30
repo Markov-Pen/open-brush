@@ -19,18 +19,18 @@ using UnityEngine;
 
 namespace TiltBrush
 {
+    /// @class MarkovPenTool
     /// @brief Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
-    ///        Until the Markov synthesis is implemented every method delegates to FreePaintTool,
-    ///        so the tool behaves identically to plain free-hand drawing.
-    /// @note in future versions it will be using a Markov Chain or an autoregressive hidden Markov Model
-    /// 
     public class MarkovPenTool : FreePaintTool
     {
+        /// @brief The internal MarkovPen instance that handles training and synthesis
         private static MarkovPen m_MarkovPen;
 
+        /// @brief The last pointer position and rotation to be returned when there is no more input
         Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 
         /// @brief Activate or deactivate the Markov Pen tool
+        /// 
         /// @param isEnabled true to activate the tool; false to deactivate it.
         public override void EnableTool(bool isEnabled)
         {
@@ -38,8 +38,8 @@ namespace TiltBrush
         }
 
         /// @brief Show or hide the tool's visual indicators
+        /// 
         /// @param isHidden true to hide the tool visuals; false to show them.
-        /// @note  Later: indicates Up Vector? adds visual indicator for controller position
         public override void HideTool(bool isHidden)
         {
             base.HideTool(isHidden);
@@ -48,9 +48,6 @@ namespace TiltBrush
         /// @brief Read controller input and drive synthesis
         ///
         /// Called every tool update tick.
-        /// @note  Later: sample the target base path B from the controller position each frame,
-        ///        run one step of DCMM synthesis to produce the next
-        ///        point on B', and feed the result into the pointer manager.
         public override void UpdateTool()
         {
             if (m_MarkovPen == null)
@@ -99,8 +96,9 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Return the world-space position and rotation for the brush pointer
-        /// @returns A tuple of (position, rotation) in global space.
+        /// @brief Retrieve the world-space position and rotation for the brush pointer
+        /// 
+        /// @returns A tuple of (position, rotation) in global coordinates
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
 
@@ -111,8 +109,8 @@ namespace TiltBrush
 
         /// @brief Create a new Markov pen
         /// 
-        /// @param basePath - Control Points of the given example Base Path
-        /// @param styleCurve - Control points of the given example Style Curve
+        /// @param basePath Control Points of the example base path
+        /// @param styleCurve Control points of the example style curve
         public static void CreateMarkovPen(List<Vector3> basePath, List<Vector3> styleCurve)
         {
             m_MarkovPen = new MarkovPen(basePath, styleCurve);
