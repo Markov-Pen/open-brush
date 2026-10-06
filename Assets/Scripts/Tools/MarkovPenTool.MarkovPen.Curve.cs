@@ -27,13 +27,33 @@ namespace TiltBrush
         /// The Curve class provides basic spline functionalities: adding control points, computing arc length positions, and evaluating positions and derivatives.
         public class Curve
         {
+            /// <summary>
+            /// The arc lenth positions of the knots
+            /// </summary>
             protected List<float> m_ArcLengthPositions;
+            
+            /// <summary>
+            /// The 3D positions of the knot points
+            /// </summary>
             protected List<Vector3> m_ControlPoints = new();
-
+            
+            /// <summary>
+            /// The previous input cached for Elasticurve smoothing 
+            /// </summary>
             private Vector3 m_LastInput = Vector3.zero;
 
+            /// <summary>
+            /// The default responsiveness of the curve for Elasticurve smoothing
+            /// </summary>            
+            ///
+            /// <remarks>
+            /// 1 means no smoothing
+            /// <remarks>
             private const float k_Responsiveness = 1f;
 
+            /// <summary>
+            /// The responsiveness of the curve for Elasticurve smoothing
+            /// </summary>            private const float k_Responsiveness = 1f;
             private readonly float m_Responsiveness;
 
             /// @brief Construct an empty Curve instance
