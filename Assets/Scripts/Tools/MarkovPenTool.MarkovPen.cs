@@ -20,6 +20,12 @@ namespace TiltBrush
 {
     /// @class MarkovPen
     /// @brief Represents a Markov Pen, generating random sylization while drawing 
+    /// 
+    /// Implementation of Lang K., Alexa M.: The Markov Pen: Online Synthesis of 
+    /// Free-Hand Drawing Styles. In Non-Photorealistic Animation and Rendering (2015), 
+    /// Eurographics Association.
+    /// 
+    /// @note Currently supports only (approximately) straight example base paths.
     public partial class MarkovPen 
     {
         /// @brief Example mapping containing the user-given base path and style curve for training
