@@ -336,7 +336,7 @@ namespace TiltBrush
                 return true;
             }
 
-                       /// @brief Inflate an association to create a point on the style curve and a projected point on the base path
+            /// @brief Inflate an association to create a point on the style curve and a projected point on the base path
             ///
             /// Converts an association (arc length position and normal offset pair)
             /// into a pair of points: The projected point on the base path 
