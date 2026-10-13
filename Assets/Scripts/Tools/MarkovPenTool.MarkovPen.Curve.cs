@@ -22,31 +22,56 @@ namespace TiltBrush
     public partial class MarkovPen
     {
         /// @class Curve
-        /// @brief Partial class representative for the style curve of the MarkovPen.
+        /// @brief Catmull-Rom spline class
         ///
-        /// The Curve class provides basic spline functionalities: adding control points, computing arc length positions, and interpolation on the curve.
+        /// The Curve class provides basic spline functionalities: adding control points, computing arc length positions, and evaluating positions and derivatives.
         public class Curve
         {
+            /// <summary>
+            /// The arc lenth positions of the knots
+            /// </summary>
             protected List<float> m_ArcLengthPositions;
+            
+            /// <summary>
+            /// The 3D positions of the knot points
+            /// </summary>
             protected List<Vector3> m_ControlPoints = new();
-
+            
+            /// <summary>
+            /// The previous input cached for Elasticurve smoothing 
+            /// </summary>
             private Vector3 m_LastInput = Vector3.zero;
 
+            /// <summary>
+            /// The default responsiveness of the curve for Elasticurve smoothing
+            /// </summary>            
+            ///
+            /// <remarks>
+            /// 1 means no smoothing
+            /// <remarks>
             private const float k_Responsiveness = 1f;
 
+            /// <summary>
+            /// The responsiveness of the curve for Elasticurve smoothing
+            /// </summary>            private const float k_Responsiveness = 1f;
             private readonly float m_Responsiveness;
 
-            /// @brief Constructor for the style curve; initializes the first arc length position.
-            /// @param responsiveness Responsiveness parameter controlling smoothing (default: 1).
+            /// @brief Construct an empty Curve instance
+            ///
+            /// Creates a target curve with initially no knots and zero arc length.
+            ///
+            /// @param responsiveness Responsiveness parameter controlling Elasticurve smoothing (default: 1 = no smoothing).
             public Curve(float responsiveness = k_Responsiveness)
             {
                 m_Responsiveness = responsiveness;
                 m_ArcLengthPositions = new List<float> { 0f };
             }
             
-            /// @brief Construct Curve 
+            /// @brief Construct a Curve instance from a set of control points
             /// 
-            /// @params controlPoints - Constrol points of the curve from OpenBrush
+            /// Creates a fully initialized example curve
+            ///
+            /// @param controlPoints Points forming the curve in OpenBrush
             public Curve(List<Vector3> controlPoints): this()
             {
                 foreach (var point in controlPoints)
@@ -56,22 +81,21 @@ namespace TiltBrush
                 Finish();
             }
 
-            /// @brief Check if the curve has been fully processed and finalized.
-            /// @return True if the curve is finished, otherwise false.
+            /// @brief Check if the curve has been finalized
+            ///
+            /// @return True if the curve is finished, otherwise false
             public virtual bool IsFinished()
             {
                 return m_ControlPoints.Count >= 2 &&
                     m_ArcLengthPositions.Count == m_ControlPoints.Count;
             }
 
-            /// @brief This public virtual method adds a control point to the curve and performs necessary updates.
-            /// If the curve is empty, the control point is directly added. If it's the first control point,
-            /// it is stored as the last input for future interpolation. For subsequent points, the method uses
-            /// cubic Hermite interpolation (elasticurve implementation) to add a new point to the curve.
-            /// The method also updates arc length information when the curve has at least three control points.
-            /// @param controlPoint The new control point to be added.
+            /// @brief Add a control point to a target curve and perform necessary updates
+            /// 
+            /// @param controlPoint The new control point to be added
             public void AddControlPoint(Vector3 controlPoint)
             {
+                // If the curve is empty, the control point is directly added
                 if (m_ControlPoints.Count == 0)
                 {
                     m_ControlPoints.Add(controlPoint);
@@ -86,6 +110,8 @@ namespace TiltBrush
                     return;
                 }
 
+                // Elasticurve (Yannick Thiel, Karan Singh, and Ravin Balakrishnan. 2011) 
+                // implementation adapted for Catmull-Rom splines
                 Vector3[] segment =
                 {
                     m_ControlPoints[m_ControlPoints.Count > 1 ? ^2 : ^1],
@@ -93,8 +119,6 @@ namespace TiltBrush
                     m_LastInput,
                     controlPoint
                 };
-
-                // Elasticurve implementation
                 Vector3 interpolatedPoint= Interpolate(segment, m_Responsiveness);
 
                 m_LastInput = controlPoint;
@@ -114,17 +138,24 @@ namespace TiltBrush
                 }
             }
 
-            /// @brief Retrieve the total arc length of the entire curve.
-            /// @return The total arc length of the curve.
+            /// @brief Request the total arc length of the curve
+            ///
+            /// Returns the distance to walk along the curve from the beginning to the end.
+            /// 
+            /// @return The total arc length of the curve
             public virtual float ArcLength()
             {
                 return m_ArcLengthPositions.Last();
             }
 
-            /// @brief Calculates the position along the curve at a given arc length parameter.
+            /// @brief Evaluate 3D point at given arc length position
+            ///
+            /// Retrieves the curve point corresponding to the given arc length position.
             /// Returns extrapolated positions when l is outside the curve range.
-            /// @param l The arc length parameter at which to calculate the position.
-            /// @return The Vector3 position on the curve at the specified arc length parameter.
+            ///
+            /// @param l  Arc length position (may be negative or beyond the arc length of the curve)
+            /// 
+            /// @return 3D Point at the specified arc length position
             public Vector3 PositionAt(float l)
             {
                 if (l < 0)
@@ -151,10 +182,13 @@ namespace TiltBrush
                 return Interpolate(segment, SegmentTime(t));
             }
 
-            /// @brief Retrieve the tangent vector at a specified arc length along the curve.
-            /// Uses cubic Hermite interpolation to compute the tangent for the segment.
-            /// @param l The arc length at which to retrieve the tangent vector.
-            /// @return The computed tangent vector at the specified arc length.
+            /// @brief Evaluate first derivative at given arc length position
+            ///
+            /// Returns the tangent vector at the specified arc length position
+            ///
+            /// @param l Arc length position (may be negative or beyond the arc length of the base path)
+            /// 
+            /// @return Derivative vector at the specified position
             public Vector3 FirstDerivativeAt(float l)
             {
                 if (l <= 0)
@@ -176,9 +210,11 @@ namespace TiltBrush
                 return EvaluateFirstDerivative(segment, SegmentTime(t));
             }
 
-            /// @brief Get an array of four Vector3 positions for the segment at the given index.
-            /// @param index The segment index used to retrieve control points.
-            /// @return An array of four Vector3 positions.
+            /// @brief Get an array of four 3D positions making up the segment at the given index
+            ///
+            /// @param index The segment index (index of the second control point)
+            /// 
+            /// @return An array of four 3D positions
             protected Vector3[] GetSegmentPositions(int index)
             {
                 Vector3 point1 = m_ControlPoints[index == 0 ? index : index - 1];
@@ -189,10 +225,12 @@ namespace TiltBrush
                 return new[] { point1, point2, point3, point4 };
             }
 
-            /// @brief Perform cubic Hermite interpolation to calculate the position on the curve.
+            /// @brief Perform cubic Hermite interpolation to compute the position at the specified time value.
+            ///
             /// @param segment The segment consisting of four control points
-            /// @param t The parameter value for interpolation.
-            /// @return The interpolated Vector3 position on the curve.
+            /// @param t The time value for interpolation ranging between 0 and 1
+            /// 
+            /// @return The interpolated 3D point
             public Vector3 Interpolate(Vector3[] segment, float t)
             {
                 (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
@@ -210,63 +248,67 @@ namespace TiltBrush
                     h4 * tangents.Item2;
             }
 
-            /// @brief Evaluate the first derivative of a cubic Hermite spline at a specified parameter t.
-            /// @param point1 The first control point of the spline.
-            /// @param point2 The second control point of the spline.
-            /// @param point3 The third control point of the spline.
-            /// @param point4 The fourth control point of the spline.
-            /// @param t The parameter at which to evaluate the first derivative (range [0,1]).
-            /// @return The first derivative of the spline at parameter t.
+            /// @brief Perform cubic Hermite interpolation to compute the first derivative at the specified time value.
+            //
+            /// @param segment The segment consisting of four control points
+            /// @param t The time value for interpolation ranging between 0 and 1
+            /// 
+            /// @return The interpolated first derivative
             public static Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
             {
 
                 (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
 
-                // First derivatives of hermnite basis functions
+                // First derivatives of hermite basis functions
                 float h1 = (float)(6 * Math.Pow(t, 2) - 6 * Math.Pow(t, 1));
                 float h2 = (float)((-6) * Math.Pow(t, 2) + 6 * Math.Pow(t, 1));
                 float h3 = (float)(3 * Math.Pow(t, 2) - 4 * Math.Pow(t, 1) + 1);
                 float h4 = (float)(3 * Math.Pow(t, 2) - 2 * Math.Pow(t, 1));
 
-                Vector3 newPoint =
+                return
                     h1 * segment[1] +
                     h2 * segment[2] +
                     h3 * tangents.Item1 +
                     h4 * tangents.Item2;
-
-                return newPoint;
             }
 
-            /// @brief Calculate the tangent vector at a given point using cubic Hermite interpolation factors.
+            /// @brief Compute the tangent vectors at the endpoints of a segment
+            ///
             /// @param segment The segment consisting of four control points
-            /// @param tension The tension factor for interpolation.
-            /// @param continuity The continuity factor for interpolation.
-            /// @param bias The bias factor for interpolation.
-            /// @return The computed tangent vector at the given point.
+            /// 
+            /// @return The computed tangent vectors
             protected static (Vector3, Vector3) ComputeTangentsAtEndpoints(Vector3[] segment)
             {
                 return ((segment[2] - segment[0]) / 2, (segment[3] - segment[1]) / 2);
             }
 
-            /// @brief Computes the local parameter within a curve segment based on the given time parameter.
-            /// @param t The time parameter for the curve segment.
-            /// @return The local parameter within the curve segment (value between 0 and 1).
+            /// @brief Compute the local time parameter within a curve segment based on the global one
+            /// 
+            /// @param t The global time value.
+            /// 
+            /// @return The local time value within the curve segment (ranging between 0 and 1).
             protected float SegmentTime(float t)
             {
                 return t % 1;
             }
 
-            /// @brief Round down the given time parameter 't' and return the corresponding integer segment index.
-            /// @param t The input time parameter as a float.
-            /// @return The rounded down integer value of 't'.
+            /// @brief Compute the integer segment index from the given global time value
+            /// 
+            /// @param t The global time value
+            /// 
+            /// @return The rounded down integer value of 't'
             protected int SegmentIndex(float t)
             {
                 return Mathf.FloorToInt(t);
             }
 
-            /// @brief Calculate the time parameter 't' based on the given arc length.
-            /// @param l The desired arc length.
-            /// @return The calculated time parameter 't'.
+            /// @brief Convert arc length position to time value
+            ///
+            /// Computes the time value corresponding to a given arc length position
+            ///
+            /// @param l Specified arc length position
+            /// 
+            /// @return Time value corresponding to arc length position
             protected float TimeAt(float l)
             {
                 int i = 0;
@@ -284,9 +326,11 @@ namespace TiltBrush
                 return i + t;
             }
 
-            /// @brief Computes the arc length of a cubic Bezier curve segment at a specific parameter value.
-            /// @param i The index of the curve segment.
-            /// @return The arc length of the cubic Bezier curve segment at the given parameter value.
+            /// @brief Computes the arc length of a Catmull-Rom curve segment
+            ///
+            /// @param i The index of the segment.
+            /// 
+            /// @return The arc length of the curve segment at the given index
             private float ComputeArcLength(int i)
             {
                 Vector3[] segment = GetSegmentPositions(i);
@@ -301,13 +345,14 @@ namespace TiltBrush
                 return ComputeArcLength(segment, 0f, 1f);
             }
 
-            /// @brief Calculate the arc length between two points on the interpolated curve.
-            /// Recursively subdivides the segment until distances fall below the threshold.
+            /// @brief Compute the arc length between two points within a segment
+            /// 
             /// @param segment The segment consisting of four control points
-            /// @param t1 The parameter value for the first interpolated point.
-            /// @param t2 The parameter value for the second interpolated point.
-            /// @param threshold The maximum distance threshold for recursive calculation (default: 0.1).
-            /// @return The computed arc length between the two interpolated points.
+            /// @param t1 The parameter value for the first interpolated point
+            /// @param t2 The parameter value for the second interpolated point
+            /// @param threshold The distance threshold for the recursion to end (default: 0.001)
+            /// 
+            /// @return The arc length distance between the two interpolated points
             public float ComputeArcLength(
                 Vector3[] segment,
                 float t1,
@@ -332,14 +377,17 @@ namespace TiltBrush
                 }
             }
 
-            /// @brief Check if the curve has any control points.
-            /// @return True if the curve has no control points, otherwise false.
+            /// @brief Check if the curve has any control points
+            ///
+            /// @return True if the curve has no control points, otherwise false
             public bool IsEmpty()
             {
                 return m_ControlPoints.Count == 0;
             }
 
-            /// @brief Finalize the curve, updating arc length information by computing the last segment's length.
+            /// @brief Finalize the curve
+            ///
+            /// Adds cached control point and complements the last two segments' arc length.
             public virtual void Finish()
             {
                 Vector3[] segment =
@@ -367,6 +415,13 @@ namespace TiltBrush
                     ComputeArcLength(m_ControlPoints.Count - 2));
             }
 
+            /// @brief Computes a vector that is orthogonal to the given one
+            ///     
+            /// Rotates the given vector by ninety degrees clockwise.
+            /// 
+            /// @param v The original vector
+            /// 
+            /// @return A vector that corresponds to the original vector rotated by ninety degrees clockwise
             public static Vector3 Orthogonal(Vector3 v)
             {
                 return new Vector3(-v.y, v.x);
