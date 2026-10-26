@@ -72,7 +72,7 @@ namespace TiltBrush
             /// 
             /// <param name="responsiveness">  
             /// Responsiveness parameter controlling Elasticurve smoothing 
-            /// (default: 1 = no smoothing).
+            /// (default: 1 = no smoothing)
             /// </param>
             public Curve(float responsiveness = k_Responsiveness)
             {
@@ -230,7 +230,7 @@ namespace TiltBrush
             /// </summary>
             /// 
             /// <remarks>
-            /// Returns the tangent vector at the specified arc length position
+            /// Returns the tangent vector at the specified arc length position.
             /// </remarks>
             /// 
             /// <param name="l">
@@ -329,7 +329,7 @@ namespace TiltBrush
             /// <returns>
             /// The interpolated first derivative
             /// </returns>
-            public static Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
+            public Vector3 EvaluateFirstDerivative(Vector3[] segment, float t)
             {
 
                 (Vector3, Vector3) tangents = ComputeTangentsAtEndpoints(segment);
@@ -364,7 +364,7 @@ namespace TiltBrush
             }
 
             /// <summary> 
-            /// Compute the local time parameter within a curve segment based on the global one
+            /// Compute the local time value within a curve segment based on the global one
             /// </summary>
             /// 
             /// <param name="t"> 
@@ -463,11 +463,11 @@ namespace TiltBrush
             /// <param name="t1"> 
             /// The time parameter for the first interpolated point
             /// </param>
-            /// <param name="segment"> 
+            /// <param name="t2"> 
             /// The time parameter for the second interpolated point
             /// </param>
             /// <param name="threshold"> 
-            /// The distance threshold for the recursion to end (default: 0.001)
+            /// The distance threshold for recursion to end (default: 0.001)
             /// </param>
             /// 
             /// <returns> 

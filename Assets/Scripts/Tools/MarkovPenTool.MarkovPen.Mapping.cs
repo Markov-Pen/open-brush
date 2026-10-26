@@ -53,7 +53,7 @@ namespace TiltBrush
             }
 
             /// <summary>
-            /// Retrive the last association in the mapping
+            /// Retrieve the last association in the mapping
             /// </summary>
             /// 
             /// <returns>

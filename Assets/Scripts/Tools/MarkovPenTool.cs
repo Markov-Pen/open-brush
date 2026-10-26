@@ -50,7 +50,7 @@ namespace TiltBrush
         /// Show or hide the tool's visual indicators
         /// </summary>
         /// <param name="isHidden">
-        /// true to hide the tool visuals; false to show them.
+        /// true to hide the tool visuals; false to show them
         /// </param>
         public override void HideTool(bool isHidden)
         {

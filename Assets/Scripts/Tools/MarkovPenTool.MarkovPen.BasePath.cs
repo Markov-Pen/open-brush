@@ -72,7 +72,7 @@ namespace TiltBrush
             /// </summary>
             ///
             /// <remarks>
-            /// Creates a fully initialized example base path
+            /// Creates a fully initialized example base path.
             /// </remarks>
             ///
             /// <param name="controlPoints">
@@ -152,6 +152,13 @@ namespace TiltBrush
                 return m_ArcLengthPositions[Math.Max(m_SmoothNormals.Count - 1, 0)];
             }
 
+            /// <summary>
+            /// Set the tap (half-window size) used for normal smoothing
+            /// </summary>
+            /// 
+            /// <param name="tap">
+            /// The smoothing tap
+            /// </param>
             public void Smooth(float tap)
             {
                 Tap = tap;
@@ -254,7 +261,7 @@ namespace TiltBrush
             /// <remarks>
             /// Determines the arc length positions 
             /// where the prolonged smooth normal 
-            /// (approximately) runs through the given 2D point.
+            /// (approximately) runs through the given 2D point.<br>
             /// Note that there may be multiple approximate projection points.
             /// </remarks>
             ///
@@ -331,7 +338,7 @@ namespace TiltBrush
             /// <remarks>
             /// Determines the arc length positions within a specified interval 
             /// where the prolonged smooth normal 
-            /// (approximately) runs through the given 2D point.
+            /// (approximately) runs through the given 2D point.<br>
             /// Note that there may be multiple approximate projection points.
             /// </remarks>
             /// 
@@ -428,7 +435,7 @@ namespace TiltBrush
             /// </summary>
             /// 
             /// <remarks>
-            /// Computes remaining smooth normals
+            /// Computes remaining smooth normals.
             /// </remarks>
             public override void Finish()
             {

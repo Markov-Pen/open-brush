@@ -26,6 +26,7 @@ namespace TiltBrush
     /// Implementation of Lang K., Alexa M.: The Markov Pen: Online Synthesis of 
     /// Free-Hand Drawing Styles. In Non-Photorealistic Animation and Rendering (2015), 
     /// Eurographics Association.
+    /// <br>
     /// Note: Currently supports only (approximately) straight example base paths.
     /// </remarks>
     public partial class MarkovPen 
@@ -96,7 +97,7 @@ namespace TiltBrush
         /// </summary>
         /// 
         /// <remarks>
-        /// Called on trigger-down
+        /// Called on trigger-down.
         /// </remarks>
         public void NewLine()
         {
