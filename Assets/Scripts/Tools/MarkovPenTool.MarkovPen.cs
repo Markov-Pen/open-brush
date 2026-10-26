@@ -18,29 +18,45 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-    /// @class MarkovPen
-    /// @brief Represents a Markov Pen, generating random sylization while drawing 
+    /// <summary>
+    /// Represents a Markov Pen, generating random sylization while drawing
+    /// </summary>  
     /// 
+    /// <remarks>
     /// Implementation of Lang K., Alexa M.: The Markov Pen: Online Synthesis of 
     /// Free-Hand Drawing Styles. In Non-Photorealistic Animation and Rendering (2015), 
     /// Eurographics Association.
-    /// 
-    /// @note Currently supports only (approximately) straight example base paths.
+    /// Note: Currently supports only (approximately) straight example base paths.
+    /// </remarks>
     public partial class MarkovPen 
     {
-        /// @brief Example mapping containing the user-given base path and style curve for training
+        /// <summary>
+        /// Example mapping containing the user-given base path and style curve for training
+        /// </summary>
         private readonly ExampleMapping m_ExampleMapping;
-        /// @brief The target mapping used for synthesis
+        /// <summary>
+        /// The target mapping used for synthesis
+        /// </summary>
         private TargetMapping m_TargetMapping;
-        /// @brief The synthesis engine creating new stylization
+        /// <summary>
+        /// The synthesis engine creating new stylization
+        /// </summary>
         private readonly SynthesisEngine m_SynthesisEngine = new();
 
-        /// @brief Construct a MarkovPen instance
+        /// <summary>
+        /// Construct a MarkovPen instance
+        /// </summary>
         /// 
+        /// <remarks>
         /// Trains a Markov pen from an example style curve and base path.
+        /// </remarks>
         /// 
-        /// @param basePathControlPoints Control points of the base path
-        /// @param styleCurveControlPoints Control points of the style curve
+        /// <param name="basePathControlPoints">
+        /// Control points of the base path
+        /// </param>
+        /// <param name="styleCurveControlPoints">
+        /// Control points of the style curve
+        /// </param>
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
@@ -52,14 +68,22 @@ namespace TiltBrush
             m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
-        /// @brief Reconstruct an example mapping one-to-one, producing a new target mapping
+        /// <summary>
+        /// Reconstruct an example mapping one-to-one, producing a new target mapping
+        /// </summary>
         /// 
+        /// <remarks>
         /// Exactly reproduces the example mapping along a target base path,
         /// repeating it as needed to cover the entire arc length.
+        /// </remarks>
         /// 
-        /// @param target_mapping The mapping to populate
+        /// <param name="pointer">
+        /// The position and rotation of the pointing device
+        /// </param>
         /// 
-        /// @return The generated knots for the target style curve
+        /// <returns>
+        /// The generated knots for the target style curve
+        /// </returns>
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
             m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
@@ -67,17 +91,25 @@ namespace TiltBrush
             return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
         }
 
-        /// @brief Discard the current target mapping and start a fresh one
+        /// <summary>
+        /// Discard the current target mapping and start a fresh one
+        /// </summary>
         /// 
-        /// @note Called on trigger-down
+        /// <remarks>
+        /// Called on trigger-down
+        /// </remarks>
         public void NewLine()
         {
             m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
         }
 
-        /// @brief Check if the model has been trained
+        /// <summary>
+        /// Check if the model has been trained
+        /// </summary>
         /// 
-        /// @return true if the model is trained, false otherwise
+        /// <returns>
+        /// true if the model is trained, false otherwise
+        /// </returns>
         public bool IsTrained()
         {
             return m_ExampleMapping != null;
