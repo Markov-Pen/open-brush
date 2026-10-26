@@ -19,35 +19,51 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-    /// @class MarkovPenTool
-    /// @brief Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
+    /// <summary>
+    /// Drawing tool that synthesizes free-hand curve styles along arbitrary base paths
+    /// </summary>
     public class MarkovPenTool : FreePaintTool
     {
-        /// @brief The internal MarkovPen instance that handles training and synthesis
+        /// <summary>
+        /// The internal MarkovPen instance that handles training and synthesis
+        /// </summary>
         private static MarkovPen m_MarkovPen;
 
-        /// @brief The last pointer position and rotation to be returned when there is no more input
+        /// <summary>
+        /// The last pointer position and rotation to be returned when there is no more input
+        /// </summary>
         Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 
-        /// @brief Activate or deactivate the Markov Pen tool
+        /// <summary>
+        /// Activate or deactivate the Markov Pen tool
+        /// </summary>
         /// 
-        /// @param isEnabled true to activate the tool; false to deactivate it.
+        /// <param name="isEnabled">
+        /// true to activate the tool; false to deactivate it
+        /// </param>
         public override void EnableTool(bool isEnabled)
         {
             base.EnableTool(isEnabled);
         }
 
-        /// @brief Show or hide the tool's visual indicators
-        /// 
-        /// @param isHidden true to hide the tool visuals; false to show them.
+        /// <summary>
+        /// Show or hide the tool's visual indicators
+        /// </summary>
+        /// <param name="isHidden">
+        /// true to hide the tool visuals; false to show them
+        /// </param>
         public override void HideTool(bool isHidden)
         {
             base.HideTool(isHidden);
         }
 
-        /// @brief Read controller input and drive synthesis
+        /// <summary>
+        /// Read controller input and drive synthesis
+        /// </summary>
         ///
+        /// <remarks>
         /// Called every tool update tick.
+        /// </remarks>
         public override void UpdateTool()
         {
             if (m_MarkovPen == null)
@@ -96,9 +112,13 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Retrieve the world-space position and rotation for the brush pointer
+        /// <summary>
+        /// Retrieve the world-space position and rotation for the brush pointer
+        /// </summary>
         /// 
-        /// @returns A tuple of (position, rotation) in global coordinates
+        /// <returns>
+        /// A tuple of (position, rotation) in global coordinates
+        /// </returns>
         protected override (Vector3, Quaternion) GetPointerPosition()
         {
 
@@ -107,10 +127,15 @@ namespace TiltBrush
             return (m_LastPointer.Item1, m_LastPointer.Item2);
         }
 
-        /// @brief Create a new Markov pen
-        /// 
-        /// @param basePath Control Points of the example base path
-        /// @param styleCurve Control points of the example style curve
+        /// <summary>
+        /// Create a new Markov pen
+        /// </summary>
+        /// <param name="basePath">
+        /// Control Points of the example base path
+        /// </param>
+        /// <param name="styleCurve">
+        /// Control points of the example style curve
+        /// </param>
         public static void CreateMarkovPen(List<Vector3> basePath, List<Vector3> styleCurve)
         {
             m_MarkovPen = new MarkovPen(basePath, styleCurve);
