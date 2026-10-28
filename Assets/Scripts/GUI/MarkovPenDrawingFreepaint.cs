@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using OpenBrush.Multiplayer;
 using UnityEngine;
 
 namespace TiltBrush
 {
+    public enum DrawingState { Started, DrawingBaseCurve, DoneBaseCurve, DrawingStyleCurve, Finished };
+
     /// @brief Provides a Markov drawing tool that paints only on the Markov drawing panel
     /// Stores drawn points, separates base curve and style curve points, and manages
     /// pointer state while the drawing panel is active.
     public class MarkovPenDrawingFreepaint : FreePaintTool
     {
+        private static DrawingState s_DrawingState = DrawingState.Started;
         private const float k_MinDirectionIndicatorLength = 0.001f;
         private const float k_MinDirectionIndicatorLengthSquared =
             k_MinDirectionIndicatorLength * k_MinDirectionIndicatorLength;
@@ -33,10 +37,6 @@ namespace TiltBrush
 
         private static bool s_WasButtonPressed;
         private static bool s_IsWaitingForFirstTriggerRelease;
-        private static bool s_IsBaseCurveDone;
-        private static bool s_IsStyleCurveDone;
-        private static bool s_HasBaseCurveStrokeStarted;
-        private static bool s_HasStyleCurveStrokeStarted;
         private static bool s_HasSavedPointerColor;
 
         /// @brief Get all active points drawn on the Markov drawing panel
@@ -130,7 +130,6 @@ namespace TiltBrush
         public override void UpdateTool()
         {
             base.UpdateTool();
-
             if (!IsDrawingPanelOpen)
             {
                 SetDirectionIndicatorActive(false);
@@ -190,10 +189,7 @@ namespace TiltBrush
         {
             s_WasButtonPressed = false;
             s_IsWaitingForFirstTriggerRelease = waitForFirstTriggerRelease;
-            s_IsBaseCurveDone = false;
-            s_IsStyleCurveDone = false;
-            s_HasBaseCurveStrokeStarted = false;
-            s_HasStyleCurveStrokeStarted = false;
+            s_DrawingState = DrawingState.Started;
         }
 
         private static void CopyPoints(List<Vector3> source, List<Vector3> destination)
@@ -309,71 +305,60 @@ namespace TiltBrush
         private void UpdateCurveState(bool isPaintingActive)
         {
             PointerManager pointerManager = PointerManager.m_Instance;
-
             if (pointerManager == null)
             {
                 return;
             }
 
-            if (s_IsStyleCurveDone)
+            switch (s_DrawingState)
             {
-                pointerManager.StraightEdgeModeEnabled = false;
-                return;
-            }
+                case DrawingState.Started:
+                    if (isPaintingActive)
+                    {
+                        s_DrawingState = DrawingState.DrawingBaseCurve;
+                        pointerManager.StraightEdgeModeEnabled = true;
+                        SetPointerColor(s_BaseCurveColor);
+                    }
+                    break;
 
-            if (!s_IsBaseCurveDone)
-            {
-                UpdateBaseCurveState(pointerManager, isPaintingActive);
-                return;
-            }
+                case DrawingState.DrawingBaseCurve:
+                    if (!m_brushTrigger)
+                    {
+                        s_DrawingState = DrawingState.DoneBaseCurve;
+                        pointerManager.StraightEdgeModeEnabled = false;
+                        pointerManager.EatLineEnabledInput();
+                    }
+                    else if (isPaintingActive)
+                    {
+                        pointerManager.StraightEdgeModeEnabled = true;
+                        SetPointerColor(s_BaseCurveColor);
+                    }
+                    break;
 
-            UpdateStyleCurveState(pointerManager, isPaintingActive);
-        }
+                case DrawingState.DoneBaseCurve:
+                    pointerManager.StraightEdgeModeEnabled = false;
+                    if (isPaintingActive)
+                    {
+                        s_DrawingState = DrawingState.DrawingStyleCurve;
+                        SetPointerColor(s_StyleCurveColor);
+                    }
+                    break;
 
-        /// @brief Update the base curve stroke state
-        /// @param pointerManager The active pointer manager.
-        /// @param isPaintingActive True when the user is painting on the drawing panel.
-        private void UpdateBaseCurveState(PointerManager pointerManager, bool isPaintingActive)
-        {
-            if (isPaintingActive)
-            {
-                s_HasBaseCurveStrokeStarted = true;
+                case DrawingState.DrawingStyleCurve:
+                    pointerManager.StraightEdgeModeEnabled = false;
+                    if (!m_brushTrigger)
+                    {
+                        FinishStyleCurve(pointerManager);
+                    }
+                    else if (isPaintingActive)
+                    {
+                        SetPointerColor(s_StyleCurveColor);
+                    }
+                    break;
 
-                pointerManager.StraightEdgeModeEnabled = true;
-                SetPointerColor(s_BaseCurveColor);
-            }
-
-            if (s_HasBaseCurveStrokeStarted && !m_brushTrigger)
-            {
-                s_IsBaseCurveDone = true;
-                s_HasBaseCurveStrokeStarted = false;
-
-                pointerManager.StraightEdgeModeEnabled = false;
-                pointerManager.EatLineEnabledInput();
-            }
-
-            if (s_IsBaseCurveDone)
-            {
-                pointerManager.StraightEdgeModeEnabled = false;
-            }
-        }
-
-        /// @brief Update the style curve stroke state
-        /// @param pointerManager The active pointer manager.
-        /// @param isPaintingActive True when the user is painting on the drawing panel.
-        private void UpdateStyleCurveState(PointerManager pointerManager, bool isPaintingActive)
-        {
-            pointerManager.StraightEdgeModeEnabled = false;
-
-            if (isPaintingActive)
-            {
-                s_HasStyleCurveStrokeStarted = true;
-                SetPointerColor(s_StyleCurveColor);
-            }
-
-            if (s_HasStyleCurveStrokeStarted && !m_brushTrigger)
-            {
-                FinishStyleCurve(pointerManager);
+                case DrawingState.Finished:
+                    pointerManager.StraightEdgeModeEnabled = false;
+                    break;
             }
         }
 
@@ -381,13 +366,16 @@ namespace TiltBrush
         /// @param pointerManager The active pointer manager.
         private static void FinishStyleCurve(PointerManager pointerManager)
         {
-            s_IsStyleCurveDone = true;
-            s_HasStyleCurveStrokeStarted = false;
+            if (pointerManager == null || s_DrawingState != DrawingState.DrawingStyleCurve)
+            {
+                return;
+            }
 
+            s_DrawingState = DrawingState.Finished;
+            pointerManager.StraightEdgeModeEnabled = false;
             pointerManager.EnableLine(false);
             pointerManager.PointerPressure = 0.0f;
             pointerManager.EatLineEnabledInput();
-
             RestorePointerColorIfNeeded();
         }
 
@@ -395,18 +383,19 @@ namespace TiltBrush
         /// @param panelPoint The panel-space point drawn on the Markov drawing panel.
         private static void SavePaintPoint(Vector2 panelPoint)
         {
-            Vector3 point = panelPoint;
-            s_ControlPoints.Add(point);
+            Vector3 point = new Vector3(panelPoint.x, panelPoint.y, 0.0f);
 
-            if (!s_IsBaseCurveDone)
+            switch (s_DrawingState)
             {
-                s_BaseCurvePoints.Add(point);
-                return;
-            }
+                case DrawingState.DrawingBaseCurve:
+                    s_BaseCurvePoints.Add(point);
+                    s_ControlPoints.Add(point);
+                    break;
 
-            if (!s_IsStyleCurveDone)
-            {
-                s_StyleCurvePoints.Add(point);
+                case DrawingState.DrawingStyleCurve:
+                    s_StyleCurvePoints.Add(point);
+                    s_ControlPoints.Add(point);
+                    break;
             }
         }
 
@@ -424,6 +413,7 @@ namespace TiltBrush
                 inputManager == null)
             {
                 SetDrawingActive(false);
+                SetDirectionIndicatorActive(false);
                 UpdateCurveState(false);
                 return;
             }
@@ -433,6 +423,7 @@ namespace TiltBrush
             if (attachTransform == null)
             {
                 SetDrawingActive(false);
+                SetDirectionIndicatorActive(false);
                 UpdateCurveState(false);
                 return;
             }
@@ -446,28 +437,30 @@ namespace TiltBrush
                 return;
             }
 
-            Collider buttonCollider =
-                drawingPanel.TryGetButtonPoint(ray, out Vector3 buttonWorldPoint);
-
-            drawingPanel.SetHoveredButton(buttonCollider);
-
-            if (buttonCollider != null)
+            if (s_DrawingState != DrawingState.DrawingBaseCurve && s_DrawingState != DrawingState.DrawingStyleCurve)
             {
-                HandleButtonHover(drawingPanel, pointerManager, buttonCollider, buttonWorldPoint);
-                return;
-            }
+                Collider buttonCollider =
+                    drawingPanel.TryGetButtonPoint(ray, out Vector3 buttonWorldPoint);
 
-            if (!m_brushTrigger)
-            {
-                s_WasButtonPressed = false;
-            }
+                drawingPanel.SetHoveredButton(buttonCollider);
 
+                if (buttonCollider != null)
+                {
+                    HandleButtonHover(drawingPanel, pointerManager, buttonCollider, buttonWorldPoint);
+                    return;
+                }
+
+                if (!m_brushTrigger)
+                {
+                    s_WasButtonPressed = false;
+                }
+            }
             if (!drawingPanel.TryGetDrawingPoint(
                 ray,
                 out Vector2 panelPoint,
                 out Vector3 drawingWorldPoint))
             {
-                if (s_HasStyleCurveStrokeStarted)
+                if (s_DrawingState == DrawingState.DrawingStyleCurve)
                 {
                     FinishStyleCurve(pointerManager);
                 }
@@ -484,14 +477,19 @@ namespace TiltBrush
 
             bool isPaintingActive =
                 m_brushTrigger &&
-                !s_IsStyleCurveDone &&
+                s_DrawingState != DrawingState.Finished &&
                 IsApplicationPaintingAllowed() &&
                 !IsViewOnlyMultiplayer();
 
             UpdateCurveState(isPaintingActive);
-            SetDrawingActive(isPaintingActive);
 
-            if (isPaintingActive)
+            // The state machine must have an active stroke before drawing is enabled.
+            bool shouldDraw = isPaintingActive &&
+                (s_DrawingState == DrawingState.DrawingBaseCurve ||
+                s_DrawingState == DrawingState.DrawingStyleCurve);
+
+            SetDrawingActive(shouldDraw);
+            if (shouldDraw)
             {
                 SavePaintPoint(panelPoint);
             }
@@ -551,8 +549,8 @@ namespace TiltBrush
             bool isCloseButtonPressed = buttonCollider == drawingPanel.CloseButtonCollider;
             bool isSaveButtonPressed = buttonCollider == drawingPanel.SaveButtonCollider;
 
-            return isCloseButtonPressed ||
-                (isSaveButtonPressed && s_IsStyleCurveDone);
+            return (isCloseButtonPressed && s_DrawingState != DrawingState.DrawingBaseCurve && s_DrawingState != DrawingState.DrawingStyleCurve) ||
+                (isSaveButtonPressed && s_DrawingState == DrawingState.Finished);
         }
 
         private static bool IsApplicationPaintingAllowed()
