@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 namespace TiltBrush
 {
@@ -41,37 +42,21 @@ namespace TiltBrush
         private Collider m_HoveredButton;
         private Vector3 m_SaveButtonBaseScale;
         private Vector3 m_CloseButtonBaseScale;
-        private bool m_IsSaved;
 
         /// @brief Get the active Markov drawing panel instance
-        public static MarkovPenDrawingPanel Instance
-        {
-            get { return s_Instance; }
-        }
+        public static MarkovPenDrawingPanel Instance => s_Instance;
 
         /// @brief Get whether the Markov drawing panel is currently open
-        public static bool IsOpen
-        {
-            get { return s_IsOpen; }
-        }
+        public static bool IsOpen => s_IsOpen;
 
         /// @brief Get the collider used for drawing input
-        public Collider DrawingCollider
-        {
-            get { return m_DrawingCollider; }
-        }
+        public Collider DrawingCollider => m_DrawingCollider;
 
         /// @brief Get the collider used for the save button
-        public Collider SaveButtonCollider
-        {
-            get { return m_SaveButtonCollider; }
-        }
+        public Collider SaveButtonCollider => m_SaveButtonCollider;
 
         /// @brief Get the collider used for the close button
-        public Collider CloseButtonCollider
-        {
-            get { return m_CloseButtonCollider; }
-        }
+        public Collider CloseButtonCollider => m_CloseButtonCollider;
 
         /// @brief Initialize the panel instance and stores the initial visual state
         protected override void Awake()
@@ -110,14 +95,13 @@ namespace TiltBrush
             s_IsOpen = true;
 
             MarkovPenSketchMemoryScript.BeginMarkovStrokeCapture();
-
             ApplyPanelScale();
-
             MarkovPenDrawingFreepaint.OnPanelOpened();
-            m_IsSaved = false;
         }
+        
 
         /// @brief Deactivate the panel and resets the Markov drawing tool state
+        /// Creates a new Markov pen from the active point lists if both curves contain points.
         protected override void OnDisablePanel()
         {
             base.OnDisablePanel();
@@ -125,23 +109,21 @@ namespace TiltBrush
             SetHoveredButton(null);
             s_IsOpen = false;
 
-            MarkovPenSketchMemoryScript.EndMarkovStrokeCapture();
             MarkovPenDrawingFreepaint.OnPanelClosed();
 
             List<Vector3> baseCurvePoints = MarkovPenDrawingFreepaint.BaseCurvePoints;
             List<Vector3> styleCurvePoints = MarkovPenDrawingFreepaint.StyleCurvePoints;
-            if (m_IsSaved)
+
+            if (baseCurvePoints.Count == 0 || styleCurvePoints.Count == 0)
             {
-                MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
-                SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.MarkovPenTool);
+                return;
             }
-            else
+
+            MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
+
+            if (SketchSurfacePanel.m_Instance != null)
             {
-                if (baseCurvePoints.Count > 0 && styleCurvePoints.Count > 0)
-                {
-                    MarkovPenTool.CreateMarkovPen(baseCurvePoints, styleCurvePoints);
-                    SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.MarkovPenTool);
-                }
+                SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.MarkovPenTool);
             }
         }
 
@@ -155,9 +137,7 @@ namespace TiltBrush
             }
 
             SetButtonHoverVisual(m_HoveredButton, false);
-
             m_HoveredButton = buttonCollider;
-
             SetButtonHoverVisual(m_HoveredButton, true);
         }
 
@@ -167,15 +147,14 @@ namespace TiltBrush
         /// @return True if the ray hit the drawing collider.
         public bool TryGetClosestPanelPoint(Ray ray, out Vector3 worldPoint)
         {
-            worldPoint = Vector3.zero;
+            if (!TryRaycast(m_DrawingCollider, ray, out RaycastHit raycastHit))
+            {
+                worldPoint = Vector3.zero;
+                return false;
+            }
 
-            float closestDistance = float.MaxValue;
-
-            return TryUpdateClosestColliderHit(
-                m_DrawingCollider,
-                ray,
-                ref closestDistance,
-                ref worldPoint);
+            worldPoint = raycastHit.point;
+            return true;
         }
 
         /// @brief Try to get a drawing point from the drawing collider using a ray
@@ -188,16 +167,11 @@ namespace TiltBrush
             out Vector2 point2D,
             out Vector3 worldPoint)
         {
-            point2D = Vector2.zero;
-            worldPoint = Vector3.zero;
-
-            if (m_DrawingCollider == null ||
-                !m_DrawingCollider.Raycast(ray, out RaycastHit raycastHit, k_RaycastMaxDistance))
+            if (!TryGetClosestPanelPoint(ray, out worldPoint))
             {
+                point2D = Vector2.zero;
                 return false;
             }
-
-            worldPoint = raycastHit.point;
 
             Vector3 panelSpacePoint =
                 Quaternion.Inverse(transform.rotation) * (worldPoint - transform.position);
@@ -238,25 +212,71 @@ namespace TiltBrush
             return closestButtonCollider;
         }
 
+        /// @brief Handle a press on a Markov drawing panel button
+        /// The save button backs up the active point lists, the close button restores them.
+        /// @param buttonCollider The collider of the pressed button.
+        public void OnButtonPressed(Collider buttonCollider)
+        {
+            if (buttonCollider == null)
+            {
+                return;
+            }
+
+            if (buttonCollider == m_SaveButtonCollider)
+            {
+                MarkovPenDrawingFreepaint.BackupPaintPointLists();
+            }
+            else if (buttonCollider == m_CloseButtonCollider)
+            {
+                MarkovPenDrawingFreepaint.RestorePaintPointListsFromBackup();
+            }
+            else
+            {
+                return;
+            }
+
+            // Stop the panel painting override immediately, before the panel is hidden.
+            s_IsOpen = false;
+
+            MarkovPenDrawingFreepaint.ResetPointer();
+            MarkovPenSketchMemoryScript.DeleteNewMarkovStrokes();
+
+            if (PanelManager.m_Instance != null)
+            {
+                PanelManager.m_Instance.HidePanel(Type);
+            }
+        }
+
+        /// @brief Raycast a single collider within the maximum raycast distance
+        /// @param collider The collider to test.
+        /// @param ray The ray used for the collider test.
+        /// @param raycastHit The resulting raycast hit.
+        /// @return True if the collider was hit.
+        private static bool TryRaycast(Collider collider, Ray ray, out RaycastHit raycastHit)
+        {
+            if (collider == null)
+            {
+                raycastHit = default;
+                return false;
+            }
+
+            return collider.Raycast(ray, out raycastHit, k_RaycastMaxDistance);
+        }
+
         /// @brief Try to update the closest raycast hit for a collider
         /// @param collider The collider to test.
         /// @param ray The ray used for the collider test.
         /// @param closestDistance The current closest hit distance.
         /// @param worldPoint The current closest world-space hit point.
         /// @return True if the collider produced a closer hit.
-        private bool TryUpdateClosestColliderHit(
+        private static bool TryUpdateClosestColliderHit(
             Collider collider,
             Ray ray,
             ref float closestDistance,
             ref Vector3 worldPoint)
         {
-            if (collider == null ||
-                !collider.Raycast(ray, out RaycastHit raycastHit, k_RaycastMaxDistance))
-            {
-                return false;
-            }
-
-            if (raycastHit.distance >= closestDistance)
+            if (!TryRaycast(collider, ray, out RaycastHit raycastHit) ||
+                raycastHit.distance >= closestDistance)
             {
                 return false;
             }
@@ -272,58 +292,39 @@ namespace TiltBrush
         /// @param isHovered True when the button is hovered.
         private void SetButtonHoverVisual(Collider buttonCollider, bool isHovered)
         {
-            if (buttonCollider == m_SaveButtonCollider && m_SaveButtonHoverTarget != null)
+            if (buttonCollider == null)
             {
-                m_SaveButtonHoverTarget.localScale = isHovered
-                    ? m_SaveButtonBaseScale * m_HoverScale
-                    : m_SaveButtonBaseScale;
+                return;
             }
-            else if (buttonCollider == m_CloseButtonCollider && m_CloseButtonHoverTarget != null)
+
+            if (buttonCollider == m_SaveButtonCollider)
             {
-                m_CloseButtonHoverTarget.localScale = isHovered
-                    ? m_CloseButtonBaseScale * m_HoverScale
-                    : m_CloseButtonBaseScale;
+                ApplyHoverScale(m_SaveButtonHoverTarget, m_SaveButtonBaseScale, isHovered);
             }
+            else if (buttonCollider == m_CloseButtonCollider)
+            {
+                ApplyHoverScale(m_CloseButtonHoverTarget, m_CloseButtonBaseScale, isHovered);
+            }
+        }
+
+        /// @brief Apply the hovered or base scale to a button hover target
+        /// @param hoverTarget The transform to scale.
+        /// @param baseScale The unhovered local scale of the transform.
+        /// @param isHovered True when the button is hovered.
+        private void ApplyHoverScale(Transform hoverTarget, Vector3 baseScale, bool isHovered)
+        {
+            if (hoverTarget == null)
+            {
+                return;
+            }
+
+            hoverTarget.localScale = isHovered ? baseScale * m_HoverScale : baseScale;
         }
 
         /// @brief Apply the configured panel size without accumulating scale changes
         private void ApplyPanelScale()
         {
             transform.localScale = m_InitialLocalScale * m_SizeMultiplier;
-        }
-
-        /// @brief Handle a press on a Markov drawing panel button
-        /// @param buttonCollider The collider of the pressed button.
-        public void OnButtonPressed(Collider buttonCollider)
-        {
-            if (buttonCollider != m_SaveButtonCollider &&
-                buttonCollider != m_CloseButtonCollider)
-            {
-                return;
-            }
-            s_IsOpen = false;
-            if (buttonCollider == m_CloseButtonCollider)
-            {
-                MarkovPenDrawingFreepaint.RestorePaintPointListsFromBackup();
-            }
-            else if (buttonCollider == m_SaveButtonCollider)
-            {
-                m_IsSaved = true;
-            }
-
-            if (PointerManager.m_Instance != null)
-            {
-                PointerManager.m_Instance.EnableLine(false);
-                PointerManager.m_Instance.PointerPressure = 0.0f;
-                PointerManager.m_Instance.EatLineEnabledInput();
-            }
-
-            MarkovPenSketchMemoryScript.DeleteNewMarkovStrokes();
-
-            if (PanelManager.m_Instance != null)
-            {
-                PanelManager.m_Instance.HidePanel(Type);
-            }
         }
     }
 }
