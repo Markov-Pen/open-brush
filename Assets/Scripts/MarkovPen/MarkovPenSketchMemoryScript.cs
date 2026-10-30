@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Collections.Generic;
 
 namespace TiltBrush
 {
     /// @brief Tracks strokes that existed before Markov drawing starts and deletes newly created strokes
-    /// Uses reflection to read current stroke references from SketchMemoryScript without modifying it.
-    public class MarkovPenSketchMemoryScript
+    /// Reads the stroke memory list of SketchMemoryScript without modifying it.
+    public static class MarkovPenSketchMemoryScript
     {
         private static readonly HashSet<Stroke> s_StrokesBeforeMarkovDrawing = new();
 
@@ -17,7 +14,14 @@ namespace TiltBrush
         {
             s_StrokesBeforeMarkovDrawing.Clear();
 
-            foreach (Stroke stroke in GetAllCurrentStrokes())
+            LinkedList<Stroke> memoryList = GetMemoryList();
+
+            if (memoryList == null)
+            {
+                return;
+            }
+
+            foreach (Stroke stroke in memoryList)
             {
                 if (stroke != null)
                 {
@@ -26,30 +30,25 @@ namespace TiltBrush
             }
         }
 
-        /// @brief End Markov stroke capture
-        /// Keeps the captured stroke snapshot available until deletion or the next capture begins.
-        public static void EndMarkovStrokeCapture()
-        {
-        }
-
         /// @brief Delete all strokes that were created after Markov stroke capture started
         /// Keeps the saved Markov point lists unchanged.
         public static void DeleteNewMarkovStrokes()
         {
-            if (SketchMemoryScript.m_Instance == null)
-            {
-                return;
-            }
+            LinkedList<Stroke> memoryList = GetMemoryList();
 
-            foreach (Stroke stroke in GetAllCurrentStrokes())
+            if (memoryList != null)
             {
-                if (stroke == null)
+                foreach (Stroke stroke in memoryList)
                 {
-                    continue;
-                }
+                    // Skip strokes that are already hidden, e.g. deleted or undone strokes.
+                    if (stroke == null ||
+                        !stroke.IsGeometryEnabled ||
+                        s_StrokesBeforeMarkovDrawing.Contains(stroke))
+                    {
+                        continue;
+                    }
 
-                if (!s_StrokesBeforeMarkovDrawing.Contains(stroke))
-                {
+                    // Deletion is deferred, so the memory list is not modified while iterating.
                     SketchMemoryScript.m_Instance.MemorizeDeleteSelection(stroke);
                 }
             }
@@ -57,51 +56,13 @@ namespace TiltBrush
             s_StrokesBeforeMarkovDrawing.Clear();
         }
 
-        /// @brief Get all current strokes found inside SketchMemoryScript through reflection
-        /// @return Enumerable collection of current stroke references.
-        private static IEnumerable<Stroke> GetAllCurrentStrokes()
+        /// @brief Get the stroke memory list of the active SketchMemoryScript
+        /// @return The memory list, or null if no SketchMemoryScript instance exists.
+        private static LinkedList<Stroke> GetMemoryList()
         {
-            if (SketchMemoryScript.m_Instance == null)
-            {
-                yield break;
-            }
-
-            object memory = SketchMemoryScript.m_Instance;
-            Type memoryType = memory.GetType();
-
-            BindingFlags flags =
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic;
-
-            FieldInfo[] fields = memoryType.GetFields(flags);
-
-            foreach (FieldInfo field in fields)
-            {
-                object value = field.GetValue(memory);
-
-                if (value == null)
-                {
-                    continue;
-                }
-
-                if (value is Stroke singleStroke)
-                {
-                    yield return singleStroke;
-                    continue;
-                }
-
-                if (value is IEnumerable enumerable)
-                {
-                    foreach (object item in enumerable)
-                    {
-                        if (item is Stroke stroke)
-                        {
-                            yield return stroke;
-                        }
-                    }
-                }
-            }
+            return SketchMemoryScript.m_Instance != null
+                ? SketchMemoryScript.m_Instance.GetMemoryList
+                : null;
         }
     }
 }
