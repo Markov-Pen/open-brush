@@ -29,7 +29,7 @@ namespace TiltBrush
     public partial class MarkovPen 
     {
         /// @brief Example mapping containing the user-given base path and style curve for training
-        private readonly ExampleMapping m_ExampleMapping;
+        private MarkovModel m_Model;
         /// @brief The target mapping used for synthesis
         private TargetMapping m_TargetMapping;
         /// @brief The synthesis engine creating new stylization
@@ -44,12 +44,11 @@ namespace TiltBrush
         public MarkovPen(List<Vector3> basePathControlPoints, List<Vector3> styleCurveControlPoints)
         {
             BasePath basePath = new BasePath(basePathControlPoints);
-            Debug.Log("MarkovPen: Arclength of example base path: " + basePath.ArcLength());
             Curve styleCurve = new Curve(styleCurveControlPoints);
-            Debug.Log("MarkovPen: Arclength of example style curve: " + styleCurve.ArcLength());
-
-            m_ExampleMapping = new ExampleMapping(basePath, styleCurve);
-            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
+            ExampleMapping exampleMapping = new ExampleMapping(basePath, styleCurve);
+            m_TargetMapping = new TargetMapping(exampleMapping.GetMaxOffsetAlongNormals());
+            // Initialize the Markov model with the example mapping
+            m_Model = new MarkovChain(exampleMapping);
         }
 
         /// @brief Reconstruct an example mapping one-to-one, producing a new target mapping
@@ -64,15 +63,29 @@ namespace TiltBrush
         {
             m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
         
-            return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
+            return m_SynthesisEngine.Reconstruct(m_Model.Mapping, m_TargetMapping);
         }
 
+        /// @brief Synthesize new stylization using the stochastic Markov chain model
+        /// 
+        /// @param pointer The current pointer pose (position and rotation)
+        /// 
+        /// @return The generated knots for the target style curve
+        public List<Tuple<Vector3, Quaternion>> Synthesize((Vector3 position, Quaternion rotation) pointer)
+        {
+            m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
+        
+            return m_SynthesisEngine.Synthesize((MarkovChain)m_Model, m_TargetMapping);
+        }
+
+
+        
         /// @brief Discard the current target mapping and start a fresh one
         /// 
         /// @note Called on trigger-down
         public void NewLine()
         {
-            m_TargetMapping = new TargetMapping(m_ExampleMapping.GetMaxOffsetAlongNormals());
+            m_TargetMapping = new TargetMapping(m_Model.Mapping.GetMaxOffsetAlongNormals());
         }
 
         /// @brief Check if the model has been trained
@@ -80,7 +93,7 @@ namespace TiltBrush
         /// @return true if the model is trained, false otherwise
         public bool IsTrained()
         {
-            return m_ExampleMapping != null;
+            return m_Model != null;
         }
 
     }

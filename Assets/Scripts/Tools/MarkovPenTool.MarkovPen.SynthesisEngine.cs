@@ -58,6 +58,42 @@ namespace TiltBrush
 
                 return generatedPoints;
             }
+
+            /// @brief Synthesize new stylization using the Markov chain model 
+            /// 
+            /// Generates new control points along a target base path using
+            /// the next sample index retrieved from the Markov chain. 
+            /// 
+            /// @param markovChain The stochastic Markov chain model 
+            /// @param targetMapping The target mapping to populate 
+            /// @return A list of control points on the target style curve and their associated rotations
+
+            public List<Tuple<Vector3, Quaternion>> Synthesize(MarkovChain markovChain, TargetMapping targetMapping)
+            {
+
+                int index = (targetMapping.LastIndex + 1) % markovChain.Mapping.Size();
+
+                List<Tuple<Vector3, Quaternion>> generatedPoints = new List<Tuple<Vector3, Quaternion>>();
+
+                while (true)
+                {
+                    Vector2 offsets = markovChain.Mapping.GetOffsets(index);
+
+                    if (!targetMapping.Apply(offsets, index))
+                    {
+                        break;
+                    }
+
+                    Vector2 association = targetMapping.Last();
+                    Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
+                    generatedPoints.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
+
+                    // Retrieve the next sample index from the Markov chain
+                    index = markovChain.GetNextSample(index);
+                }
+
+                return generatedPoints;
+            }
         }
     }
 }

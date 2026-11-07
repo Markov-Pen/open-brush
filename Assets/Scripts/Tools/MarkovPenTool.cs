@@ -65,7 +65,8 @@ namespace TiltBrush
                 m_LastPointer = Tuple.Create(start.Item1, start.Item2);
             }
 
-            List<Tuple<Vector3, Quaternion>> pointers = (m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+            // Use stochastic Markov synthesis instead of deterministic reconstruction
+            List<Tuple<Vector3, Quaternion>> pointers = (m_MarkovPen.Synthesize(base.GetPointerPosition()));
 
             if (pointers.Count > 0)
             {
