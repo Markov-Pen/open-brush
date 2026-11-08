@@ -244,7 +244,9 @@ namespace TiltBrush
 
             if (m_AlwaysSpawnPanel || isPanelOpen)
             {
-                PanelManager.m_Instance.DismissNonCorePanel(m_LongPressPanelType);
+                BasePanel panel = m_Manager.GetPanelForPopUps();
+
+
             }
 
             if (m_AlwaysSpawnPanel || !isPanelOpen)

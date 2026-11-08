@@ -853,6 +853,9 @@ MonoBehaviour:
   - m_PopUpPrefab: {fileID: 1559017956401146, guid: 3b86d3238205be14d9b6a07d506135f2,
       type: 3}
     m_Command: 55
+  - m_PopUpPrefab: {fileID: 1887799951535888, guid: 8627ba4138a684847a29a06179933465,
+      type: 3}
+    m_Command: 13000
   m_PanelDescription: ADVANCEDTOOLS_PANEL_DESCRIPTION
   m_LocalizedPanelDescription:
     m_TableReference:
@@ -2453,7 +2456,7 @@ GameObject:
   - component: {fileID: 8418152343079167436}
   - component: {fileID: 8475751345369272462}
   - component: {fileID: 6898435711544463812}
-  - component: {fileID: 5302107569650824872}
+  - component: {fileID: 4189619200900629930}
   m_Layer: 16
   m_Name: Button_MarkovPen
   m_TagString: Untagged
@@ -2547,7 +2550,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 0.01}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5302107569650824872
+--- !u!114 &4189619200900629930
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2556,12 +2559,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 869646083460455879}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 200876bac21a46479372042f14e5a662, type: 3}
+  m_Script: {fileID: 11500000, guid: 0eca91ea617987a4a8b8d03e685fc648, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_DescriptionType: 0
   m_DescriptionYOffset: 0
-  m_DescriptionText: ADVANCEDTOOLS_PANEL_BUTTON_REPAINT
+  m_DescriptionText: 
   m_LocalizedDescription:
     m_TableReference:
       m_TableCollectionName: GUID:c84355079ab3f3e4f8f3812258805f86
@@ -2593,16 +2596,38 @@ MonoBehaviour:
   m_HoverScale: 1.1
   m_HoverBoxColliderGrow: 0.2
   m_AddOverlay: 0
+  m_Command: 13000
+  m_CommandParam: -1
+  m_CommandParam2: -1
+  m_RequiresPopup: 1
+  m_CenterPopupOnButton: 0
+  m_PopupOffset: {x: 0, y: 0, z: 0}
+  m_PopupText: 
+  m_LocalizedPopup:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_ToggleOnDescription: 
+  m_LocalizedToggleOnDescription:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_ToggleOnTexture: {fileID: 0}
+  m_AllowUnavailable: 0
+  m_LinkedUIObject: {fileID: 0}
   m_LongPressDuration: 0.3
-  m_NormalPressTool: 11002
-  m_LongPressTool: 11003
-  m_LongPressPanelType: 99999
-  m_AlwaysSpawnPanel: 0
-  m_PanelRightOffsetFromLeftController: 3.2
-  m_PanelForwardOffsetFromLeftController: -0.8
-  m_PanelUpOffsetFromLeftController: 0.05
-  m_UseHeadRotationForPanel: 1
-  m_PanelRotationOffsetEulers: {x: 0, y: 0, z: 0}
+  m_Tool: 11002
+  m_EatGazeInputOnPress: 1
   references:
     version: 2
     RefIds: []

@@ -766,7 +766,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 7932977482539008
-    m_Localized: "Chargement des mod\xE8les depuis Icosa Gallery\n\nNe tardez pas \xE0 revenir\_!"
+    m_Localized: "Chargement des mod\xE8les depuis Icosa Gallery\n\nNe tardez pas
+      \xE0 revenir\_!"
     m_Metadata:
       m_Items: []
   - m_Id: 7933149889404928
@@ -3640,6 +3641,14 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 326871757446639616
     m_Localized: "Permettre \xE0 tous les joueurs de modifier"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 562467170609786880
+    m_Localized: 
+    m_Metadata:
+      m_Items: []
+  - m_Id: 562467372804599808
+    m_Localized: 
     m_Metadata:
       m_Items: []
   references:
