@@ -29,7 +29,7 @@ namespace TiltBrush
     /// <br>
     /// Note: Currently supports only (approximately) straight example base paths.
     /// </remarks>
-    public partial class MarkovPen 
+    public partial class MarkovPen
     {
         /// <summary>
         /// Example mapping containing the user-given base path and style curve for training
@@ -87,8 +87,8 @@ namespace TiltBrush
         /// </returns>
         public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
         {
-            m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f,1.0f,0.0f));
-        
+            m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
+
             return m_SynthesisEngine.Reconstruct(m_ExampleMapping, m_TargetMapping);
         }
 

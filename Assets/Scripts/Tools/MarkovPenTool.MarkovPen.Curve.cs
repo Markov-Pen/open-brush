@@ -36,12 +36,12 @@ namespace TiltBrush
             /// The arc length positions of the knots
             /// </summary>
             protected List<float> m_ArcLengthPositions;
-            
+
             /// <summary>
             /// The 3D positions of the knot points
             /// </summary>
             protected List<Vector3> m_ControlPoints = new();
-            
+
             /// <summary>
             /// The previous input cached for Elasticurve smoothing 
             /// </summary>
@@ -79,7 +79,7 @@ namespace TiltBrush
                 m_Responsiveness = responsiveness;
                 m_ArcLengthPositions = new List<float> { 0f };
             }
-            
+
             /// <summary> 
             /// Construct a Curve instance from a set of control points
             /// </summary>
@@ -91,7 +91,7 @@ namespace TiltBrush
             /// <param name="controlPoints">
             /// Points forming the curve in OpenBrush
             /// </param>
-            public Curve(List<Vector3> controlPoints): this()
+            public Curve(List<Vector3> controlPoints) : this()
             {
                 foreach (var point in controlPoints)
                 {
@@ -147,7 +147,7 @@ namespace TiltBrush
                     m_LastInput,
                     controlPoint
                 };
-                Vector3 interpolatedPoint= Interpolate(segment, m_Responsiveness);
+                Vector3 interpolatedPoint = Interpolate(segment, m_Responsiveness);
 
                 m_LastInput = controlPoint;
 
@@ -211,7 +211,7 @@ namespace TiltBrush
 
                 if (l >= m_ArcLengthPositions.Last())
                 {
-                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count-2);
+                    Vector3[] lastSegment = GetSegmentPositions(m_ControlPoints.Count - 2);
                     Vector3 tangent = ComputeTangentsAtEndpoints(lastSegment).Item2;
 
                     return m_ControlPoints[^1] +

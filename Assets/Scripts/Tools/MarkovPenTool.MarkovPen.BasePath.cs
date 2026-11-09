@@ -21,7 +21,7 @@ using Vector3 = UnityEngine.Vector3;
 namespace TiltBrush
 {
     public partial class MarkovPen
-    { 
+    {
         /// <summary>
         /// Represents the base path of a Markov Pen
         /// </summary>
@@ -220,7 +220,7 @@ namespace TiltBrush
             {
                 float center = m_ArcLengthPositions[index];
                 float windowSize = 2 * Tap + 1;
-                
+
                 Vector3 smoothTangentVector = Vector3.zero;
                 // Add up tangent vectors
                 for (float l = center - Tap; l <= center + Tap; l += (1.0f / windowSize))
@@ -277,13 +277,13 @@ namespace TiltBrush
                 List<float> projections = new List<float>();
 
                 // If the curve is a straight line, just project on that
-                if(m_ControlPoints.Count == 2)
+                if (m_ControlPoints.Count == 2)
                 {
                     Vector3 tangentDirection =
                         Vector3.Normalize(m_ControlPoints.Last() - m_ControlPoints.First());
 
-                    Vector3 toPoint = toProject - m_ControlPoints[0];  
-                    
+                    Vector3 toPoint = toProject - m_ControlPoints[0];
+
                     projections.Add(Vector3.Dot(toPoint, tangentDirection));
 
                     return projections;
@@ -412,7 +412,7 @@ namespace TiltBrush
                 Vector3 basePoint = PositionAt(l);
                 Vector3 toPoint = point - basePoint;
 
-                Vector3 normal= SmoothNormalAt(l).normalized;
+                Vector3 normal = SmoothNormalAt(l).normalized;
 
                 float projection = Vector3.Dot(normal, toPoint);
                 Vector3 offset = normal * projection;
