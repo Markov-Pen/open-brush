@@ -195,7 +195,7 @@ namespace TiltBrush
                 return new Vector3(
                     m_OffsetsAlongBasePath[index],
                     m_Mapping[index].y,
-                    0);
+                    m_Mapping[index].z);
             }
 
             /// <summary>
@@ -304,21 +304,21 @@ namespace TiltBrush
                 {
                     Vector3 basePoint = m_BasePath.PositionAt(projections[i]);
 
-                    Vector3 smoothNormal =
+                    Vector3 tangentVector =
+                        m_BasePath.SmoothTangentVectorAt(projections[i]);
+                    Vector3 normal =
                         m_BasePath.SmoothNormalAt(projections[i]);
+                    Vector3 binormal = Vector3.Cross(normal, tangentVector);
 
                     Vector3 toSample = samples[i] - basePoint;
 
                     float offsetAlongNormal =
-                        Vector3.Distance(basePoint, samples[i]);
-
-                    if (Vector3.Dot(smoothNormal, toSample) < 0)
-                    {
-                        offsetAlongNormal *= -1;
-                    }
+                        Vector3.Dot(normal.normalized, toSample);
+                    float offsetAlongBinormal =
+                        Vector3.Dot(binormal.normalized, toSample);
 
                     m_Mapping.Add(
-                        new Vector3(projections[i], offsetAlongNormal, 0));
+                        new Vector3(projections[i], offsetAlongNormal, offsetAlongBinormal));
                 }
             }
 
@@ -452,7 +452,7 @@ namespace TiltBrush
                 }
 
                 // Add new association to the mapping
-                m_Mapping.Add(new Vector3(l, offsets.y, 0));
+                m_Mapping.Add(new Vector3(l, offsets.y, offsets.z));
 
                 m_StyleCurve.AddControlPoint(
                     Inflate(m_Mapping.Last()).Item2);
@@ -488,6 +488,9 @@ namespace TiltBrush
 
                 Vector3 normal =
                     m_BasePath.SmoothNormalAt(association.x);
+                Vector3 tangent =
+                    m_BasePath.SmoothTangentVectorAt(association.x);
+                Vector3 binormal = Vector3.Cross(normal, tangent);
 
                 Vector3 toPoint =
                     Vector3.Scale(
@@ -495,7 +498,14 @@ namespace TiltBrush
                         new Vector3(
                             association.y,
                             association.y,
-                            association.y));
+                            association.y))
+                            +
+                    Vector3.Scale(
+                        binormal.normalized,
+                        new Vector3(
+                            association.z,
+                            association.z,
+                            association.z));
 
                 return new Tuple<Vector3, Vector3>(
                     basePoint,
