@@ -259,8 +259,10 @@ namespace TiltBrush
         {
             if (ActiveTool.m_Type != BaseTool.ToolType.RepaintTool &&
                 ActiveTool.m_Type != BaseTool.ToolType.RecolorTool &&
-                ActiveTool.m_Type != BaseTool.ToolType.ScriptedTool)
+                ActiveTool.m_Type != BaseTool.ToolType.ScriptedTool &&
+                ActiveTool.m_Type != BaseTool.ToolType.MarkovPenTool)
             {
+                Debug.LogError(ActiveTool.m_Type + " is not a valid tool for color update");
                 EnableDefaultTool();
             }
         }

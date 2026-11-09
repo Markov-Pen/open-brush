@@ -1076,7 +1076,7 @@ namespace TiltBrush
                 // update tools.
                 if (bWidgetGrabOK && !m_GrabBrush.grabbingWorld)
                 {
-                    if (m_CurrentGazeObject != -1 && !m_WorldBeingGrabbed)
+                    if (m_CurrentGazeObject != -1 && !m_WorldBeingGrabbed && !MarkovPenDrawingPanel.IsOpen)
                     {
                         UpdateActiveGazeObject();
 
