@@ -15,7 +15,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace TiltBrush
 {
@@ -38,7 +40,7 @@ namespace TiltBrush
             /// <summary>
             /// The actual mapping containing associations between style curve and base path
             /// </summary>
-            protected List<Vector2> m_Mapping = new();
+            protected List<Vector3> m_Mapping = new();
 
             /// <summary>
             /// Request the size of a mapping
@@ -59,7 +61,7 @@ namespace TiltBrush
             /// <returns>
             /// The last association in the Mapping
             /// </returns>
-            public Vector2 Last()
+            public Vector3 Last()
             {
                 return m_Mapping.Last();
             }
@@ -85,7 +87,7 @@ namespace TiltBrush
             /// <returns>
             /// A Vector2 representing the association (x = arc length position, y = offset)
             /// </returns>
-            public Vector2 GetAssociation(int index)
+            public Vector3 GetAssociation(int index)
             {
                 return m_Mapping[index];
             }
@@ -188,11 +190,12 @@ namespace TiltBrush
             /// <returns>
             /// Point with x = arc length distance to predecessor, y = offset along smooth normal
             /// </returns>
-            public Vector2 GetOffsets(int index)
+            public Vector3 GetOffsets(int index)
             {
-                return new Vector2(
+                return new Vector3(
                     m_OffsetsAlongBasePath[index],
-                    m_Mapping[index].y);
+                    m_Mapping[index].y,
+                    0);
             }
 
             /// <summary>
@@ -295,7 +298,7 @@ namespace TiltBrush
             /// </param>
             private void ComputeMapping(List<Vector3> samples, List<float> projections)
             {
-                m_Mapping = new List<Vector2>();
+                m_Mapping = new List<Vector3>();
 
                 for (int i = 0; i < samples.Count; ++i)
                 {
@@ -315,7 +318,7 @@ namespace TiltBrush
                     }
 
                     m_Mapping.Add(
-                        new Vector2(projections[i], offsetAlongNormal));
+                        new Vector3(projections[i], offsetAlongNormal, 0));
                 }
             }
 
@@ -434,7 +437,7 @@ namespace TiltBrush
             /// <returns>
             /// true if successful, false if the generated association is beyond the end of the base path
             /// </returns>
-            public bool Apply(Vector2 offsets, int index)
+            public bool Apply(Vector3 offsets, int index)
             {
                 // Compute new arcLength position
                 float l =
@@ -449,7 +452,7 @@ namespace TiltBrush
                 }
 
                 // Add new association to the mapping
-                m_Mapping.Add(new Vector2(l, offsets.y));
+                m_Mapping.Add(new Vector3(l, offsets.y, 0));
 
                 m_StyleCurve.AddControlPoint(
                     Inflate(m_Mapping.Last()).Item2);
@@ -478,7 +481,7 @@ namespace TiltBrush
             /// <returns>
             /// Pair of points: first = base point, second = style curve point
             /// </returns>
-            public Tuple<Vector3, Vector3> Inflate(Vector2 association)
+            public Tuple<Vector3, Vector3> Inflate(Vector3 association)
             {
                 Vector3 basePoint =
                     m_BasePath.PositionAt(association.x);

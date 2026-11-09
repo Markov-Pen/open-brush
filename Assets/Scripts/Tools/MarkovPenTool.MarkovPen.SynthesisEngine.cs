@@ -54,14 +54,14 @@ namespace TiltBrush
 
                 while (true)
                 {
-                    Vector2 offsets = exampleMapping.GetOffsets(index);
+                    Vector3 offsets = exampleMapping.GetOffsets(index);
 
                     if (!targetMapping.Apply(offsets, index))
                     {
                         break;
                     }
 
-                    Vector2 association = targetMapping.Last();
+                    Vector3 association = targetMapping.Last();
                     Tuple<Vector3, Vector3> endPoints = targetMapping.Inflate(association);
                     generatedPoints.Add(Tuple.Create(endPoints.Item2, Quaternion.identity));
 

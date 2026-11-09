@@ -293,7 +293,7 @@ namespace TiltBrush
             private Vector3 ComputeSmoothNormal(int index)
             {
                 Vector3 upVector = m_UpVectors[index].normalized * 100;
-                Vector3 smoothTangentDirection = ComputeSmoothTangentVector(index).normalized;
+                Vector3 smoothTangentDirection = m_SmoothTangentVectors[index].normalized;
 
                 // Project prologenged up vector onto smooth tangent
                 float projection = Vector3.Dot(upVector, smoothTangentDirection);
