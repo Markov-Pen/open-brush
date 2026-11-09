@@ -84,3 +84,29 @@ resharper_wrap_after_expression_lbrace = false
 resharper_wrap_before_expression_rbrace = false
 resharper_wrap_for_stmt_header_style = wrap_if_long
 resharper_wrap_object_and_collection_initializer_style = chop_always
+
+
+# SonarQube Code-Analysis Ruleset
+# Handcrafted Ruleset, mainly in use at the Markov-Pen Projects. 
+# !!! Needs to be removed BEFORE merging into Mother-Repo !!!
+
+[*.cs]
+dotnet_naming_symbols.private_instance_fields.applicable_kinds = field
+dotnet_naming_symbols.private_instance_fields.applicable_accessibilities = private
+
+dotnet_naming_symbols.private_static_fields.applicable_kinds = field
+dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_fields.required_modifiers = static
+
+dotnet_naming_style.m_prefix_camel_case.required_prefix = m_
+dotnet_naming_style.m_prefix_camel_case.capitalization = camel_case
+
+dotnet_naming_rule.private_fields_need_m_prefix.symbols = private_instance_fields
+dotnet_naming_rule.private_fields_need_m_prefix.style = m_prefix_camel_case
+dotnet_naming_rule.private_fields_need_m_prefix.severity = warning
+
+dotnet_naming_rule.private_static_fields_ignored.symbols = private_static_fields
+dotnet_naming_rule.private_static_fields_ignored.style = m_prefix_camel_case
+dotnet_naming_rule.private_static_fields_ignored.severity = none
+
+dotnet_diagnostic.IDE1006.severity = warning
