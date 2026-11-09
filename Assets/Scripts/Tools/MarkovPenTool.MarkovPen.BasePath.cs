@@ -43,6 +43,12 @@ namespace TiltBrush
             private readonly List<Vector3> m_UpVectors = new();
 
             /// <summary> 
+            /// The list of smooth tangent vectors for each knot
+            /// <summary>
+            private readonly List<Vector3> m_SmoothTangentVectors = new();
+
+
+            /// <summary> 
             /// The list of smooth normals for each knot
             /// <summary>
             private readonly List<Vector3> m_SmoothNormals = new();
@@ -120,6 +126,7 @@ namespace TiltBrush
                 {
                     int index = m_SmoothNormals.Count;
 
+                    m_SmoothTangentVectors.Add(ComputeSmoothTangentVector(index));
                     m_SmoothNormals.Add(ComputeSmoothNormal(index));
 
                     if (m_SmoothNormals.Count > 1 &&
@@ -175,6 +182,47 @@ namespace TiltBrush
             /// <returns>
             /// Smoothed normal vector
             /// </returns>
+            public Vector3 SmoothTangentVectorAt(float l)
+            {
+                if (l <= 0)
+                {
+                    return m_SmoothTangentVectors[0];
+                }
+
+                if (l >= m_ArcLengthPositions.Last())
+                {
+                    return m_SmoothTangentVectors.Last();
+                }
+
+                float t = TimeAt(l);
+                int index = SegmentIndex(t);
+
+                Vector3[] smoothTangentVectors =
+                {
+                    index == 0 ?
+                        m_SmoothTangentVectors[0] :
+                        m_SmoothTangentVectors[index - 1].normalized,
+                    m_SmoothTangentVectors[index].normalized,
+                    m_SmoothTangentVectors[index + 1].normalized,
+                    index == m_SmoothTangentVectors.Count - 2 ?
+                        m_SmoothTangentVectors[index + 1].normalized :
+                        m_SmoothTangentVectors[index + 2].normalized,
+                };
+
+                return Interpolate(smoothTangentVectors, SegmentTime(t));
+            }
+
+            /// <summary>
+            /// Evaluate smoothed normal vector at given arc length position
+            /// </summary>
+            /// 
+            /// <param name="l"> 
+            /// Arc length position (may be negative or beyond the arc length of the base path)
+            /// </param>
+            /// 
+            /// <returns>
+            /// Smoothed normal vector
+            /// </returns>
             public Vector3 SmoothNormalAt(float l)
             {
                 if (l <= 0)
@@ -216,7 +264,7 @@ namespace TiltBrush
             /// <returns> 
             /// Smoothed tangent vector
             /// </returns>
-            private Vector3 ComputeSmoothTangent(int index)
+            private Vector3 ComputeSmoothTangentVector(int index)
             {
                 float center = m_ArcLengthPositions[index];
                 float windowSize = 2 * Tap + 1;
@@ -245,7 +293,7 @@ namespace TiltBrush
             private Vector3 ComputeSmoothNormal(int index)
             {
                 Vector3 upVector = m_UpVectors[index].normalized * 100;
-                Vector3 smoothTangentDirection = ComputeSmoothTangent(index).normalized;
+                Vector3 smoothTangentDirection = ComputeSmoothTangentVector(index).normalized;
 
                 // Project prologenged up vector onto smooth tangent
                 float projection = Vector3.Dot(upVector, smoothTangentDirection);
@@ -409,25 +457,11 @@ namespace TiltBrush
             /// </returns>
             private float Shoot(Vector3 point, float l)
             {
-                Vector3 basePoint = PositionAt(l);
-                Vector3 toPoint = point - basePoint;
+                Vector3 toPoint = point - PositionAt(l);
+                Vector3 tangentDirection = SmoothTangentVectorAt(l).normalized;
 
-                Vector3 normal = SmoothNormalAt(l).normalized;
-
-                float projection = Vector3.Dot(normal, toPoint);
-                Vector3 offset = normal * projection;
-                Vector3 closestPoint = basePoint + offset;
-
-                float distance = Vector3.Distance(point, closestPoint);
-
-                double determinant = toPoint.x * normal.y - toPoint.y * normal.x;
-
-                if (determinant < 0)
-                {
-                    distance *= -1;
-                }
-
-                return distance;
+                // Compute signed distance to plane spanned by smooth normal and smooth binormal
+                return Vector3.Dot(tangentDirection, toPoint);
             }
 
             /// <summary>
@@ -445,6 +479,7 @@ namespace TiltBrush
                     index < m_ControlPoints.Count;
                     index++)
                 {
+                    m_SmoothTangentVectors.Add(ComputeSmoothTangentVector(index));
                     m_SmoothNormals.Add(ComputeSmoothNormal(index));
                 }
             }
