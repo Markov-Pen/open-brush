@@ -9,7 +9,8 @@ namespace TiltBrush
     ///
     /// <remarks>
     /// Enables the straight edge mode of the pointer manager when the tool is enabled.
-    /// Stores the pointer positions while the brush trigger is held.
+    /// Stores the pointer positions while the brush trigger is held
+    /// and clears them when a new stroke begins.
     /// The tool is not registered yet.
     /// </remarks>
     public class MarkovPen3DBasePathTool : FreePaintTool
@@ -46,12 +47,18 @@ namespace TiltBrush
         /// </summary>
         ///
         /// <remarks>
-        /// Called every tool update tick. Delegates to the base implementation
+        /// Called every tool update tick. Delegates to the base implementation,
+        /// clears the stored points when the brush trigger is pressed
         /// and stores the pointer position while the brush trigger is held.
         /// </remarks>
         public override void UpdateTool()
         {
             base.UpdateTool();
+
+            if (m_brushTriggerDown)
+            {
+                m_BasePathPoints.Clear();
+            }
 
             if (m_brushTrigger)
             {
