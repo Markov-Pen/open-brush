@@ -10,7 +10,7 @@ namespace TiltBrush
     /// <remarks>
     /// Enables the straight edge mode of the pointer manager when the tool is enabled.
     /// Stores the pointer positions while the brush trigger is held
-    /// and clears them when a new stroke begins.
+    /// and clears them together with the previous strokes when a new stroke begins.
     /// The tool is not registered yet.
     /// </remarks>
     public class MarkovPen3DBasePathTool : FreePaintTool
@@ -25,7 +25,8 @@ namespace TiltBrush
         /// </summary>
         ///
         /// <remarks>
-        /// Turns on the straight edge mode of the pointer manager when the tool is enabled.
+        /// Turns on the straight edge mode of the pointer manager when the tool is enabled
+        /// and starts capturing the strokes that exist at that moment.
         /// </remarks>
         ///
         /// <param name="isEnabled">
@@ -39,6 +40,7 @@ namespace TiltBrush
             {
                 PointerManager pointerManager = PointerManager.m_Instance;
                 pointerManager.StraightEdgeModeEnabled = true;
+                MarkovPenSketchMemoryScript.BeginMarkovStrokeCapture();
             }
         }
 
@@ -47,9 +49,10 @@ namespace TiltBrush
         /// </summary>
         ///
         /// <remarks>
-        /// Called every tool update tick. Delegates to the base implementation,
-        /// clears the stored points when the brush trigger is pressed
-        /// and stores the pointer position while the brush trigger is held.
+        /// Called every tool update tick. Delegates to the base implementation.
+        /// When the brush trigger is pressed, deletes the strokes of the previous attempt,
+        /// starts a new stroke capture and clears the stored points.
+        /// While the brush trigger is held, stores the pointer position.
         /// </remarks>
         public override void UpdateTool()
         {
@@ -57,6 +60,8 @@ namespace TiltBrush
 
             if (m_brushTriggerDown)
             {
+                MarkovPenSketchMemoryScript.DeleteNewMarkovStrokes();
+                MarkovPenSketchMemoryScript.BeginMarkovStrokeCapture();
                 m_BasePathPoints.Clear();
             }
 
