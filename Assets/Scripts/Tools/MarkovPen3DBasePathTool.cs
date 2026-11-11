@@ -7,10 +7,33 @@ namespace TiltBrush
     /// </summary>
     ///
     /// <remarks>
-    /// Keeps the free-paint behavior unchanged and is not registered as a tool yet.
+    /// Enables the straight edge mode of the pointer manager when the tool is enabled.
+    /// The tool is not registered yet.
     /// </remarks>
     public class MarkovPen3DBasePathTool : FreePaintTool
     {
+        /// <summary>
+        /// Enables or disables the tool.
+        /// </summary>
+        ///
+        /// <remarks>
+        /// Turns on the straight edge mode of the pointer manager when the tool is enabled.
+        /// </remarks>
+        ///
+        /// <param name="isEnabled">
+        /// True to enable the tool; false to disable it.
+        /// </param>
+        public override void EnableTool(bool isEnabled)
+        {
+            base.EnableTool(isEnabled);
+
+            if (isEnabled)
+            {
+                PointerManager pointerManager = PointerManager.m_Instance;
+                pointerManager.StraightEdgeModeEnabled = true;
+            }
+        }
+
         /// <summary>
         /// Updates the tool once per tick.
         /// </summary>
