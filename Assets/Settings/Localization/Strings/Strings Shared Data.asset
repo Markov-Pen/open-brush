@@ -3635,6 +3635,22 @@ MonoBehaviour:
     m_Key: MARKOV_PEN_2D
     m_Metadata:
       m_Items: []
+  - m_Id: 565408210950025216
+    m_Key: MARKOV_PEN_SAVE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565408277484269568
+    m_Key: MARKOV_PEN_CLOSE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565411367641935872
+    m_Key: MARKOV_PEN_DRAW_BASE_CURVE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565411445198811136
+    m_Key: MARKOV_PEN_DRAW_STYLE_CURVE
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

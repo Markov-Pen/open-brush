@@ -44,7 +44,6 @@ namespace TiltBrush
         private static DrawingState s_DrawingState = DrawingState.Started;
         private static Color s_PointerColorBeforeMarkovDrawing = Color.white;
 
-        private static bool s_WasButtonPressed;
         private static bool s_IsWaitingForFirstTriggerRelease;
         private static bool s_HasSavedPointerColor;
 
@@ -65,6 +64,9 @@ namespace TiltBrush
 
         /// @brief Get the backed-up style curve points from the last saved Markov drawing
         public static IReadOnlyList<Vector3> BackupStyleCurvePoints => s_BackupStyleCurvePoints;
+
+        /// @brief Get whether both curves have been completed
+        public static bool IsDrawingFinished => s_DrawingState == DrawingState.Finished;
 
         /// @brief Get whether the Markov drawing panel is currently open and available
         private static bool IsDrawingPanelOpen =>
@@ -164,7 +166,6 @@ namespace TiltBrush
 
         private static void ResetInteractionState(bool waitForFirstTriggerRelease)
         {
-            s_WasButtonPressed = false;
             s_IsWaitingForFirstTriggerRelease = waitForFirstTriggerRelease;
             s_DrawingState = DrawingState.Started;
         }
@@ -281,23 +282,6 @@ namespace TiltBrush
             }
 
             s_ControlPoints.Add(point);
-        }
-
-        private static bool IsButtonPressAllowed(
-            MarkovPenDrawingPanel drawingPanel,
-            Collider buttonCollider)
-        {
-            if (buttonCollider == drawingPanel.CloseButtonCollider)
-            {
-                return !IsDrawingCurve;
-            }
-
-            if (buttonCollider == drawingPanel.SaveButtonCollider)
-            {
-                return s_DrawingState == DrawingState.Finished;
-            }
-
-            return false;
         }
 
         private static bool IsApplicationPaintingAllowed()
@@ -454,7 +438,7 @@ namespace TiltBrush
         }
 
         /// @brief Override normal painting behavior while the Markov drawing panel is open
-        /// Redirects the brush pointer onto panel colliders, handles button interaction,
+        /// Redirects the brush pointer onto the drawing collider
         /// and stores points while painting is active.
         private void ApplyMarkovPanelPaintingOverride()
         {
@@ -481,26 +465,6 @@ namespace TiltBrush
             {
                 HandleInitialTriggerRelease();
                 return;
-            }
-
-            // Panel buttons are blocked while a curve is being drawn.
-            if (!IsDrawingCurve)
-            {
-                Collider buttonCollider =
-                    drawingPanel.TryGetButtonPoint(ray, out Vector3 buttonWorldPoint);
-
-                drawingPanel.SetHoveredButton(buttonCollider);
-
-                if (buttonCollider != null)
-                {
-                    HandleButtonHover(drawingPanel, pointerManager, buttonCollider, buttonWorldPoint);
-                    return;
-                }
-
-                if (!m_brushTrigger)
-                {
-                    s_WasButtonPressed = false;
-                }
             }
 
             if (!drawingPanel.TryGetDrawingPoint(
@@ -537,6 +501,7 @@ namespace TiltBrush
             }
         }
 
+        /// @brief Wait for the first trigger release after the panel is opened
         private void HandleInitialTriggerRelease()
         {
             StopDrawing();
@@ -547,36 +512,7 @@ namespace TiltBrush
             }
 
             s_IsWaitingForFirstTriggerRelease = false;
-            s_WasButtonPressed = false;
             ResetPointer();
-        }
-
-        private void HandleButtonHover(
-            MarkovPenDrawingPanel drawingPanel,
-            PointerManager pointerManager,
-            Collider buttonCollider,
-            Vector3 buttonWorldPoint)
-        {
-            pointerManager.SetPointerTransform(
-                InputManager.ControllerName.Brush,
-                buttonWorldPoint,
-                drawingPanel.transform.rotation);
-
-            StopDrawing();
-
-            if (!m_brushTrigger)
-            {
-                s_WasButtonPressed = false;
-                return;
-            }
-
-            if (s_WasButtonPressed || !IsButtonPressAllowed(drawingPanel, buttonCollider))
-            {
-                return;
-            }
-
-            s_WasButtonPressed = true;
-            drawingPanel.OnButtonPressed(buttonCollider);
         }
     }
 }

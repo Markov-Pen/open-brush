@@ -113,10 +113,9 @@ namespace TiltBrush
             {
                 m_HasLongPressTriggered = false;
             }
-            else if (TryToggleNormalPressTool())
+            else
             {
-                RefreshSelectionVisuals();
-                PlayPressedAudio();
+                TryToggleNormalPressTool();
             }
 
             SetButtonUntouched();
@@ -162,11 +161,11 @@ namespace TiltBrush
 
         /// @brief Try to toggle the configured normal-press tool
         /// @return True if the tool state was changed successfully.
-        private bool TryToggleNormalPressTool()
+        private void TryToggleNormalPressTool()
         {
             if (!TryGetSketchSurfacePanel(out SketchSurfacePanel sketchSurfacePanel))
             {
-                return false;
+                return;
             }
 
             if (IsNormalPressToolActive())
@@ -177,8 +176,9 @@ namespace TiltBrush
             {
                 sketchSurfacePanel.EnableSpecificTool(m_NormalPressTool);
             }
+            RefreshSelectionVisuals();
+            PlayPressedAudio();
 
-            return true;
         }
 
         /// @brief Update the activated visual state based on the active tool and panel state

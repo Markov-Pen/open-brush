@@ -201,7 +201,9 @@ namespace TiltBrush
             MergeBrushStrokes = 10000,
             RepaintOptions = 11500,
             OpenNumericInputPopup = 12000,
-            MarkovPenOptions = 13000
+            MarkovPenOptions = 13000,
+            MarkovPen2DOptions = 13001,
+            MarkovPen3DOptions = 13002
         }
 
         public enum ControlsType
@@ -1077,11 +1079,27 @@ namespace TiltBrush
                 // update tools.
                 if (bWidgetGrabOK && !m_GrabBrush.grabbingWorld)
                 {
-                    if (m_CurrentGazeObject != -1 && !m_WorldBeingGrabbed && !MarkovPenDrawingPanel.IsOpen)
+                    bool allowInteraction = !MarkovPenDrawingPanel.IsOpen;
+
+                    if (m_CurrentGazeObject >= 0 &&
+                        m_CurrentGazeObject < m_PanelManager.GetAllPanels().Count)
+                    {
+                        BasePanel currentPanel =
+                            m_PanelManager.GetPanel(m_CurrentGazeObject);
+
+                        allowInteraction =
+                            !MarkovPenDrawingPanel.IsOpen ||
+                            (currentPanel != null &&
+                            currentPanel.PanelPopUp is MarkovPen2DPopUpWindow);
+                    }
+
+                    if (m_CurrentGazeObject >= 0 &&
+                        m_CurrentGazeObject < m_PanelManager.GetAllPanels().Count &&
+                        !m_WorldBeingGrabbed &&
+                        allowInteraction)
                     {
                         UpdateActiveGazeObject();
 
-                        // Allow for standard input (like Undo / Redo) even when gazing at a panel.
                         if (m_CurrentInputState == InputState.Standard)
                         {
                             UpdateStandardInput();
@@ -1089,6 +1107,11 @@ namespace TiltBrush
                     }
                     else
                     {
+                        // Hide the UI cursor when interaction is blocked.
+                        if (MarkovPenDrawingPanel.IsOpen && !allowInteraction)
+                        {
+                            m_UIReticle.SetActive(false);
+                        }
                         //standard input, no gaze object
                         if (m_InputStateConfigs[(int)m_CurrentInputState].m_AllowMovement)
                         {

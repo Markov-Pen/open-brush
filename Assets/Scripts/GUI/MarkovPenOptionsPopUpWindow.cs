@@ -1,4 +1,4 @@
-﻿// Copyright 2022 The Tilt Brush Authors
+﻿// Copyright 2026 The Tilt Brush Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,117 +16,37 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-
+    /// <summary>
+    /// Provides the selection popup for the 2D and 3D Markov Pen modes.
+    /// </summary>
     public class MarkovPenOptionsPopUpWindow : OptionsPopUpWindow
     {
-        private const float k_MinDirectionSqrMagnitude = 0.001f;
-
-        [Header("Radio Buttons")]
-        [SerializeField] private RadioButton m_2DButton;
-        [SerializeField] private RadioButton m_3DButton;
-
-        [Header("2D Tool and Panel")]
-        [SerializeField] private BaseTool.ToolType m_2DTool;
-        [SerializeField] private BasePanel.PanelType m_PanelType;
-        [SerializeField] private bool m_AlwaysSpawnPanel = false;
-
-        [Header("2D Panel Spawn")]
-        [SerializeField] private float m_PanelRightOffsetFromLeftController = 0.35f;
-        [SerializeField] private float m_PanelForwardOffsetFromLeftController = 0.15f;
-        [SerializeField] private float m_PanelUpOffsetFromLeftController = 0.05f;
-        [SerializeField] private bool m_UseHeadRotationForPanel = true;
-        [SerializeField] private Vector3 m_PanelRotationOffsetEulers = Vector3.zero;
-        override public void Init(GameObject rParent, string sText)
+        /// <summary>
+        /// Opens the 2D Markov Pen popup.
+        /// </summary>
+        public void TwoDimensional()
         {
-            base.Init(rParent, sText);
-            var pm = PointerManager.m_Instance;
-
+            MarkovPenPopUpSwitcher.Switch(
+                this,
+                SketchControlsScript.GlobalCommands.MarkovPen2DOptions);
         }
 
+        /// <summary>
+        /// Opens the 3D Markov Pen popup.
+        /// </summary>
+        public void ThreeDimensional()
+        {
+            MarkovPenPopUpSwitcher.Switch(
+                this,
+                SketchControlsScript.GlobalCommands.MarkovPen3DOptions);
+        }
 
-
-
+        /// <summary>
+        /// Closes the selection popup.
+        /// </summary>
         public void HandleOKButton()
         {
             RequestClose(true);
         }
-
-        public void TwoDimensional(RadioButton button)
-        {
-            SketchSurfacePanel sketchSurfacePanel =
-                SketchSurfacePanel.m_Instance;
-
-            if (sketchSurfacePanel == null ||
-                PanelManager.m_Instance == null ||
-                SketchControlsScript.m_Instance == null)
-            {
-                Debug.LogError(
-                    "MarkovPenOptionsPopUpWindow: Required instance is null.");
-                return;
-            }
-
-            // Activate the 2D tool.
-            sketchSurfacePanel.EnableSpecificTool(m_2DTool);
-
-            // Check whether the panel is already open.
-            bool isPanelOpen =
-                PanelManager.m_Instance.IsPanelOpen(m_PanelType);
-
-            if (!isPanelOpen)
-            {
-                SketchControlsScript.m_Instance.OpenPanelOfType(
-                    m_PanelType,
-                    GetLongPressPanelSpawnTransform());
-            }
-
-
-        }
-
-
-
-
-
-
-        /// @brief Build a panel spawn transform to the right of this left-controller button
-        /// The panel rotation follows the user's full head direction, including looking down/up.
-        /// @return The transform used by SketchControlsScript.OpenPanelOfType.
-        private TrTransform GetLongPressPanelSpawnTransform()
-        {
-            Transform headTransform = ViewpointScript.Head;
-
-            if (headTransform == null)
-            {
-                return TrTransform.FromTransform(transform);
-            }
-
-            Vector3 userRight = GetNormalizedDirection(headTransform.right, transform.right);
-            Vector3 userForward = GetNormalizedDirection(headTransform.forward, transform.forward);
-
-            Vector3 panelPosition =
-                transform.position +
-                userRight * m_PanelRightOffsetFromLeftController +
-                userForward * m_PanelForwardOffsetFromLeftController +
-                Vector3.up * m_PanelUpOffsetFromLeftController;
-
-            Quaternion panelRotation = m_UseHeadRotationForPanel
-                ? Quaternion.LookRotation(userForward, headTransform.up)
-                : transform.rotation;
-
-            panelRotation *= Quaternion.Euler(m_PanelRotationOffsetEulers);
-
-            return TrTransform.TRS(panelPosition, panelRotation, 1.0f);
-        }
-        /// @brief Normalize a direction, falling back to another direction if it is too short
-        /// @param direction The preferred direction.
-        /// @param fallbackDirection The direction used when the preferred direction is degenerate.
-        /// @return The normalized direction.
-        private static Vector3 GetNormalizedDirection(Vector3 direction, Vector3 fallbackDirection)
-        {
-            return direction.sqrMagnitude < k_MinDirectionSqrMagnitude
-                ? fallbackDirection.normalized
-                : direction.normalized;
-        }
-
-
     }
-} // namespace TiltBrush
+}
