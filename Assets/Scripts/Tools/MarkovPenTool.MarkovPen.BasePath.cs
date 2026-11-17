@@ -1,4 +1,4 @@
-// Copyright 2026 Marvin Link, Katrin Lang, Artur Meshalkin
+// Copyright 2026 Marvin Link, Katrin Lang
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ using Vector3 = UnityEngine.Vector3;
 namespace TiltBrush
 {
     public partial class MarkovPen
-    {
+
+    { 
         /// <summary>
         /// Represents the base path of a Markov Pen
         /// </summary>
@@ -274,7 +275,7 @@ namespace TiltBrush
             /// </returns>
             public List<float> Project(Vector3 toProject)
             {
-                List<float> projections = new List<float>();
+                List<float> projections = new();
 
                 // If the curve is a straight line, just project on that
                 if (m_ControlPoints.Count == 2)
