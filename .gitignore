@@ -29,7 +29,8 @@
 /*.userprefs
 .vsconfig
 .vs
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 
 # Generated files in TiltBrushCpp project
 /Support/TiltBrushCpp/x64

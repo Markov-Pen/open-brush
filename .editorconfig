@@ -87,26 +87,91 @@ resharper_wrap_object_and_collection_initializer_style = chop_always
 
 
 # SonarQube Code-Analysis Ruleset
-# Handcrafted Ruleset, mainly in use at the Markov-Pen Projects. 
+# Handcrafted Ruleset, mainly in use at the Markov-Pen Projects.
+# Source: Confluence "Our Coding Style" (MPPFOB).
+# Checked live in VS Code by C# Dev Kit (IDE1006 naming, IDE0040 access modifiers).
 # !!! Needs to be removed BEFORE merging into Mother-Repo !!!
 
 [*.cs]
-dotnet_naming_symbols.private_instance_fields.applicable_kinds = field
-dotnet_naming_symbols.private_instance_fields.applicable_accessibilities = private
-
-dotnet_naming_symbols.private_static_fields.applicable_kinds = field
-dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private
-dotnet_naming_symbols.private_static_fields.required_modifiers = static
-
-dotnet_naming_style.m_prefix_camel_case.required_prefix = m_
-dotnet_naming_style.m_prefix_camel_case.capitalization = camel_case
-
-dotnet_naming_rule.private_fields_need_m_prefix.symbols = private_instance_fields
-dotnet_naming_rule.private_fields_need_m_prefix.style = m_prefix_camel_case
-dotnet_naming_rule.private_fields_need_m_prefix.severity = warning
-
-dotnet_naming_rule.private_static_fields_ignored.symbols = private_static_fields
-dotnet_naming_rule.private_static_fields_ignored.style = m_prefix_camel_case
-dotnet_naming_rule.private_static_fields_ignored.severity = none
-
+# Always write access modifiers (private/protected/public)
+dotnet_style_require_accessibility_modifiers = always
+dotnet_diagnostic.IDE0040.severity = warning
 dotnet_diagnostic.IDE1006.severity = warning
+
+# --- Naming styles ---
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.camel_case.capitalization = camel_case
+
+dotnet_naming_style.i_prefix_pascal_case.required_prefix = I
+dotnet_naming_style.i_prefix_pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.m_prefix_pascal_case.required_prefix = m_
+dotnet_naming_style.m_prefix_pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.s_prefix_pascal_case.required_prefix = s_
+dotnet_naming_style.s_prefix_pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.k_prefix_pascal_case.required_prefix = k_
+dotnet_naming_style.k_prefix_pascal_case.capitalization = pascal_case
+
+# --- Symbol groups ---
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_symbols.interfaces.applicable_accessibilities = *
+
+# Classes, structs, enums, delegates
+dotnet_naming_symbols.types.applicable_kinds = class, struct, enum, delegate
+dotnet_naming_symbols.types.applicable_accessibilities = *
+
+dotnet_naming_symbols.members.applicable_kinds = method, property, event, local_function
+dotnet_naming_symbols.members.applicable_accessibilities = *
+
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.applicable_accessibilities = *
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_symbols.non_public_static_fields.applicable_kinds = field
+dotnet_naming_symbols.non_public_static_fields.applicable_accessibilities = private, protected, internal, protected_internal, private_protected
+dotnet_naming_symbols.non_public_static_fields.required_modifiers = static
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_symbols.public_fields.applicable_kinds = field
+dotnet_naming_symbols.public_fields.applicable_accessibilities = public
+
+dotnet_naming_symbols.locals_and_parameters.applicable_kinds = local, parameter
+dotnet_naming_symbols.locals_and_parameters.applicable_accessibilities = *
+
+# --- Rules (Roslyn orders them by specificity, not by position) ---
+dotnet_naming_rule.interfaces_i_prefix.symbols = interfaces
+dotnet_naming_rule.interfaces_i_prefix.style = i_prefix_pascal_case
+dotnet_naming_rule.interfaces_i_prefix.severity = warning
+
+dotnet_naming_rule.types_pascal_case.symbols = types
+dotnet_naming_rule.types_pascal_case.style = pascal_case
+dotnet_naming_rule.types_pascal_case.severity = warning
+
+dotnet_naming_rule.members_pascal_case.symbols = members
+dotnet_naming_rule.members_pascal_case.style = pascal_case
+dotnet_naming_rule.members_pascal_case.severity = warning
+
+dotnet_naming_rule.constants_k_prefix.symbols = constants
+dotnet_naming_rule.constants_k_prefix.style = k_prefix_pascal_case
+dotnet_naming_rule.constants_k_prefix.severity = warning
+
+dotnet_naming_rule.static_fields_s_prefix.symbols = non_public_static_fields
+dotnet_naming_rule.static_fields_s_prefix.style = s_prefix_pascal_case
+dotnet_naming_rule.static_fields_s_prefix.severity = warning
+
+dotnet_naming_rule.private_fields_m_prefix.symbols = private_fields
+dotnet_naming_rule.private_fields_m_prefix.style = m_prefix_pascal_case
+dotnet_naming_rule.private_fields_m_prefix.severity = warning
+
+dotnet_naming_rule.public_fields_pascal_case.symbols = public_fields
+dotnet_naming_rule.public_fields_pascal_case.style = pascal_case
+dotnet_naming_rule.public_fields_pascal_case.severity = warning
+
+dotnet_naming_rule.locals_and_parameters_camel_case.symbols = locals_and_parameters
+dotnet_naming_rule.locals_and_parameters_camel_case.style = camel_case
+dotnet_naming_rule.locals_and_parameters_camel_case.severity = warning
