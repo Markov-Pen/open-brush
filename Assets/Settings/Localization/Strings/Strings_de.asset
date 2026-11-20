@@ -3706,6 +3706,30 @@ MonoBehaviour:
     m_Localized: Markov Pen
     m_Metadata:
       m_Items: []
+  - m_Id: 562467170609786880
+    m_Localized: 3D Zeichnen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 562467372804599808
+    m_Localized: 2D Zeichnen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565408210950025216
+    m_Localized: Zeichnung speichern
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565408277484269568
+    m_Localized: "Zeichenfl\xE4che schlie\xDFen"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565411367641935872
+    m_Localized: Basiskurve zeichnen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 565411445198811136
+    m_Localized: Stilkurve zeichnen
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
