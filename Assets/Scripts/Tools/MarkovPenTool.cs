@@ -32,7 +32,7 @@ namespace TiltBrush
         /// <summary>
         /// The last pointer position and rotation to be returned when there is no more input
         /// </summary>
-        Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
+        private Tuple<Vector3, Quaternion> m_LastPointer = new(Vector3.zero, Quaternion.identity);
 
         /// <summary>
         /// Activate or deactivate the Markov Pen tool
@@ -77,15 +77,15 @@ namespace TiltBrush
             if (triggerDown)
             {
                 m_MarkovPen.NewLine();
-                var start = base.GetPointerPosition();
+                (Vector3, Quaternion) start = base.GetPointerPosition();
                 m_LastPointer = Tuple.Create(start.Item1, start.Item2);
             }
 
-            List<Tuple<Vector3, Quaternion>> pointers = (m_MarkovPen.Reconstruct(base.GetPointerPosition()));
+            List<Tuple<Vector3, Quaternion>> pointers = m_MarkovPen.Stylize(base.GetPointerPosition());
 
             if (pointers.Count > 0)
             {
-                m_LastPointer = pointers.First();
+                m_LastPointer = pointers[0];
                 pointers.RemoveAt(0);
             }
 

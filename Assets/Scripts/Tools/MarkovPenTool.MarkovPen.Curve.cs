@@ -1,4 +1,4 @@
-// Copyright 2026 Marvin Link, Katrin Lang, Artur Meshalkin
+// Copyright 2026 Marvin Link, Katrin Lang
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -147,6 +147,8 @@ namespace TiltBrush
                     m_LastInput,
                     controlPoint
                 };
+
+                // Elasticurve implementation
                 Vector3 interpolatedPoint = Interpolate(segment, m_Responsiveness);
 
                 m_LastInput = controlPoint;
