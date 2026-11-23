@@ -1,4 +1,4 @@
-// Copyright 2026 Marvin Link, Katrin Lang, Artur Meshalkin
+// Copyright 2026 Marvin Link, Katrin Lang
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ namespace TiltBrush
         /// <returns>
         /// The generated knots for the target style curve
         /// </returns>
-        public List<Tuple<Vector3, Quaternion>> Reconstruct((Vector3 position, Quaternion rotation) pointer)
+        public List<Tuple<Vector3, Quaternion>> Stylize((Vector3 position, Quaternion rotation) pointer)
         {
             m_TargetMapping.AddBasePoint(pointer.position, pointer.rotation * new Vector3(0.0f, 1.0f, 0.0f));
 
@@ -115,6 +115,5 @@ namespace TiltBrush
         {
             return m_ExampleMapping != null;
         }
-
     }
 }
