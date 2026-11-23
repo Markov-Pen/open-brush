@@ -45,6 +45,7 @@ namespace TiltBrush
             /// <returns>
             /// A list of control points on the target style curve
             /// and the associated rotations of the controller
+            /// </returns>
             public List<Tuple<Vector3, Quaternion>> Reconstruct(ExampleMapping exampleMapping, TargetMapping targetMapping)
             {
 

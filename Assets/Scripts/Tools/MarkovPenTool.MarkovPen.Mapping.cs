@@ -32,7 +32,7 @@ namespace TiltBrush
             protected BasePath m_BasePath;
             /// <summary> 
             /// The style curve
-            /// <summary>
+            /// </summary>
             protected Curve m_StyleCurve;
 
             /// <summary>
@@ -102,13 +102,21 @@ namespace TiltBrush
         /// </remarks>
         public class ExampleMapping : Mapping
         {
-            /// @brief Default sampling interval
+            /// <summary>
+            /// Default sampling interval
+            /// </summary>
             private const float k_SamplingInterval = 0.025f;
-            /// @brief Actual sampling interval
+            /// <summary>
+            /// Actual sampling interval
+            /// </summary>
             private float m_SamplingInterval = k_SamplingInterval;
 
-            /// @brief Offsets between each projection point on the base path
+            /// <summary>
+            /// Offsets between each projection point on the base path
+            /// </summary>
+            /// <remarks>
             /// and its predecessor
+            /// </remarks>
             private List<float> m_OffsetsAlongBasePath;
 
             /// <summary>

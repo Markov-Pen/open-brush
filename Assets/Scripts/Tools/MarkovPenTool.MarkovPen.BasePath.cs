@@ -45,7 +45,7 @@ namespace TiltBrush
 
             /// <summary> 
             /// The list of smooth normals for each knot
-            /// <summary>
+            /// </summary>
             private readonly List<Vector3> m_SmoothNormals = new();
 
             /// <summary> 
@@ -210,7 +210,7 @@ namespace TiltBrush
             /// Compute smoothed tangent vector at given index
             /// </summary>
             /// 
-            /// <param name="l">
+            /// <param name="index">
             /// The knot index starting from 0
             /// </param>
             /// 
@@ -262,7 +262,7 @@ namespace TiltBrush
             /// <remarks>
             /// Determines the arc length positions 
             /// where the prolonged smooth normal 
-            /// (approximately) runs through the given 2D point.<br>
+            /// (approximately) runs through the given 2D point.<br/>
             /// Note that there may be multiple approximate projection points.
             /// </remarks>
             ///
@@ -339,7 +339,7 @@ namespace TiltBrush
             /// <remarks>
             /// Determines the arc length positions within a specified interval 
             /// where the prolonged smooth normal 
-            /// (approximately) runs through the given 2D point.<br>
+            /// (approximately) runs through the given 2D point.<br/>
             /// Note that there may be multiple approximate projection points.
             /// </remarks>
             /// 
