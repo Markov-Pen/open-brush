@@ -78,7 +78,6 @@ namespace TiltBrush
             ///<returns>
             ///A pair of variates independently drawn from the standard normal distribution
             ///</returns>
-
             public (double x, double y) GenerateStandardNormalVariates()
             {
 
@@ -88,10 +87,10 @@ namespace TiltBrush
                 // Angle of random vector given in polar coordinates
                 double angle = 2.0 * Math.PI * u;
 
-                // Another variate from the uniform distribution on the interval [0...1)
+                // Another variate from the uniform distribution on the interval (0...1)
                 //Must not be zero
                 do {
-                u = Random.Shared.NextDouble();
+                    u = Random.Shared.NextDouble();
                 } while (u == 0.0);
 
                 // Magnitude of random vector given in polar coordinates
@@ -101,15 +100,15 @@ namespace TiltBrush
                 double x = Math.Cos(angle) * magnitude;
                 double y = Math.Sin(angle) * magnitude;
 
-                return (x , y);
+                return (x, y);
             }
             /// <summary>
-            /// Produces a pair of random values by introducing random variation around the provided mean values
+            /// Produces a pair of random values by introducing random 
+            /// variation around the provided mean values
             /// </summary>
             /// <returns>
             /// A pair of randomly adjusted values
             /// </returns>
-
             public (double ending1, double ending2) Randomize((double mean1, double mean2) meanValue)
             {
                 // Standard deviations are asumed to be half of the mean values
@@ -126,9 +125,16 @@ namespace TiltBrush
                 endings.ending2 = standardDeviations.std2 * variates.variate2 + meanValue.mean2;
 
                 return endings;
-            
             }
-
+            ///<summary>
+            /// Generate random variation of a value
+            /// Wrapper around the two-value randomization method.
+            /// Applies the same variation logic used for paired values 
+            /// and returns one randomized result.
+            /// </summary>
+            /// <returns>
+            /// A randomly adjusted value.
+            /// </returns>
             public double Randomize(double meanValue)
             {
                 return Randomize((meanValue, meanValue)).ending1;
