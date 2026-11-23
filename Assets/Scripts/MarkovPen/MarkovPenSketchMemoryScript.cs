@@ -5,14 +5,22 @@ using System.Reflection;
 
 namespace TiltBrush
 {
-    /// @brief Tracks strokes that existed before Markov drawing starts and deletes newly created strokes
+    /// <summary>
+    /// Tracks strokes that existed before Markov drawing starts and deletes newly created strokes
+    /// </summary>
+    /// <remarks>
     /// Uses reflection to read current stroke references from SketchMemoryScript without modifying it.
+    /// </remarks>
     public class MarkovPenSketchMemoryScript
     {
         private static readonly HashSet<Stroke> s_StrokesBeforeMarkovDrawing = new();
 
-        /// @brief Start capturing the current sketch stroke state before Markov drawing begins
+        /// <summary>
+        /// Start capturing the current sketch stroke state before Markov drawing begins
+        /// </summary>
+        /// <remarks>
         /// Stores all currently existing strokes so newly created Markov strokes can be detected later.
+        /// </remarks>
         public static void BeginMarkovStrokeCapture()
         {
             s_StrokesBeforeMarkovDrawing.Clear();
@@ -26,14 +34,22 @@ namespace TiltBrush
             }
         }
 
-        /// @brief End Markov stroke capture
+        /// <summary>
+        /// End Markov stroke capture
+        /// </summary>
+        /// <remarks>
         /// Keeps the captured stroke snapshot available until deletion or the next capture begins.
+        /// </remarks>
         public static void EndMarkovStrokeCapture()
         {
         }
 
-        /// @brief Delete all strokes that were created after Markov stroke capture started
+        /// <summary>
+        /// Delete all strokes that were created after Markov stroke capture started
+        /// </summary>
+        /// <remarks>
         /// Keeps the saved Markov point lists unchanged.
+        /// </remarks>
         public static void DeleteNewMarkovStrokes()
         {
             if (SketchMemoryScript.m_Instance == null)
@@ -57,8 +73,10 @@ namespace TiltBrush
             s_StrokesBeforeMarkovDrawing.Clear();
         }
 
-        /// @brief Get all current strokes found inside SketchMemoryScript through reflection
-        /// @return Enumerable collection of current stroke references.
+        /// <summary>
+        /// Get all current strokes found inside SketchMemoryScript through reflection
+        /// </summary>
+        /// <returns>Enumerable collection of current stroke references.</returns>
         private static IEnumerable<Stroke> GetAllCurrentStrokes()
         {
             if (SketchMemoryScript.m_Instance == null)

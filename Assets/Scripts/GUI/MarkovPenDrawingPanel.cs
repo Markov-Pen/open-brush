@@ -3,9 +3,13 @@ using UnityEngine;
 
 namespace TiltBrush
 {
-    /// @brief Provides the drawing panel used by the Markov pen drawing tool
+    /// <summary>
+    /// Provides the drawing panel used by the Markov pen drawing tool
+    /// </summary>
+    /// <remarks>
     /// Handles panel lifetime state, drawing collider raycasts,
     /// button raycasts, and panel button actions.
+    /// </remarks>
     public class MarkovPenDrawingPanel : BasePanel
     {
         private const float k_RaycastMaxDistance = 100.0f;
@@ -43,37 +47,49 @@ namespace TiltBrush
         private Vector3 m_CloseButtonBaseScale;
         private bool m_IsSaved;
 
-        /// @brief Get the active Markov drawing panel instance
+        /// <summary>
+        /// Get the active Markov drawing panel instance
+        /// </summary>
         public static MarkovPenDrawingPanel Instance
         {
             get { return s_Instance; }
         }
 
-        /// @brief Get whether the Markov drawing panel is currently open
+        /// <summary>
+        /// Get whether the Markov drawing panel is currently open
+        /// </summary>
         public static bool IsOpen
         {
             get { return s_IsOpen; }
         }
 
-        /// @brief Get the collider used for drawing input
+        /// <summary>
+        /// Get the collider used for drawing input
+        /// </summary>
         public Collider DrawingCollider
         {
             get { return m_DrawingCollider; }
         }
 
-        /// @brief Get the collider used for the save button
+        /// <summary>
+        /// Get the collider used for the save button
+        /// </summary>
         public Collider SaveButtonCollider
         {
             get { return m_SaveButtonCollider; }
         }
 
-        /// @brief Get the collider used for the close button
+        /// <summary>
+        /// Get the collider used for the close button
+        /// </summary>
         public Collider CloseButtonCollider
         {
             get { return m_CloseButtonCollider; }
         }
 
-        /// @brief Initialize the panel instance and stores the initial visual state
+        /// <summary>
+        /// Initialize the panel instance and stores the initial visual state
+        /// </summary>
         protected override void Awake()
         {
             base.Awake();
@@ -102,7 +118,9 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Activate the panel and prepares the Markov drawing tool
+        /// <summary>
+        /// Activate the panel and prepares the Markov drawing tool
+        /// </summary>
         protected override void OnEnablePanel()
         {
             base.OnEnablePanel();
@@ -117,7 +135,9 @@ namespace TiltBrush
             m_IsSaved = false;
         }
 
-        /// @brief Deactivate the panel and resets the Markov drawing tool state
+        /// <summary>
+        /// Deactivate the panel and resets the Markov drawing tool state
+        /// </summary>
         protected override void OnDisablePanel()
         {
             base.OnDisablePanel();
@@ -145,8 +165,10 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Set the currently hovered panel button and updates its visual state
-        /// @param buttonCollider The collider of the button that is currently hovered.
+        /// <summary>
+        /// Set the currently hovered panel button and updates its visual state
+        /// </summary>
+        /// <param name="buttonCollider">The collider of the button that is currently hovered.</param>
         public void SetHoveredButton(Collider buttonCollider)
         {
             if (m_HoveredButton == buttonCollider)
@@ -161,10 +183,12 @@ namespace TiltBrush
             SetButtonHoverVisual(m_HoveredButton, true);
         }
 
-        /// @brief Try to get the closest point on the drawing collider using a ray
-        /// @param ray The ray used to test the drawing collider.
-        /// @param worldPoint The resulting world-space point on the drawing collider.
-        /// @return True if the ray hit the drawing collider.
+        /// <summary>
+        /// Try to get the closest point on the drawing collider using a ray
+        /// </summary>
+        /// <param name="ray">The ray used to test the drawing collider.</param>
+        /// <param name="worldPoint">The resulting world-space point on the drawing collider.</param>
+        /// <returns>True if the ray hit the drawing collider.</returns>
         public bool TryGetClosestPanelPoint(Ray ray, out Vector3 worldPoint)
         {
             worldPoint = Vector3.zero;
@@ -178,11 +202,13 @@ namespace TiltBrush
                 ref worldPoint);
         }
 
-        /// @brief Try to get a drawing point from the drawing collider using a ray
-        /// @param ray The ray used to test the drawing collider.
-        /// @param point2D The resulting local two-dimensional point on the drawing panel.
-        /// @param worldPoint The resulting world-space point on the drawing panel.
-        /// @return True if the ray hit the drawing collider.
+        /// <summary>
+        /// Try to get a drawing point from the drawing collider using a ray
+        /// </summary>
+        /// <param name="ray">The ray used to test the drawing collider.</param>
+        /// <param name="point2D">The resulting local two-dimensional point on the drawing panel.</param>
+        /// <param name="worldPoint">The resulting world-space point on the drawing panel.</param>
+        /// <returns>True if the ray hit the drawing collider.</returns>
         public bool TryGetDrawingPoint(
             Ray ray,
             out Vector2 point2D,
@@ -206,10 +232,12 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Try to get the closest button collider hit by a ray
-        /// @param ray The ray used to test the button colliders.
-        /// @param worldPoint The resulting world-space point on the button collider.
-        /// @return The closest hit button collider, or null if no button was hit.
+        /// <summary>
+        /// Try to get the closest button collider hit by a ray
+        /// </summary>
+        /// <param name="ray">The ray used to test the button colliders.</param>
+        /// <param name="worldPoint">The resulting world-space point on the button collider.</param>
+        /// <returns>The closest hit button collider, or null if no button was hit.</returns>
         public Collider TryGetButtonPoint(Ray ray, out Vector3 worldPoint)
         {
             worldPoint = Vector3.zero;
@@ -238,12 +266,14 @@ namespace TiltBrush
             return closestButtonCollider;
         }
 
-        /// @brief Try to update the closest raycast hit for a collider
-        /// @param collider The collider to test.
-        /// @param ray The ray used for the collider test.
-        /// @param closestDistance The current closest hit distance.
-        /// @param worldPoint The current closest world-space hit point.
-        /// @return True if the collider produced a closer hit.
+        /// <summary>
+        /// Try to update the closest raycast hit for a collider
+        /// </summary>
+        /// <param name="collider">The collider to test.</param>
+        /// <param name="ray">The ray used for the collider test.</param>
+        /// <param name="closestDistance">The current closest hit distance.</param>
+        /// <param name="worldPoint">The current closest world-space hit point.</param>
+        /// <returns>True if the collider produced a closer hit.</returns>
         private bool TryUpdateClosestColliderHit(
             Collider collider,
             Ray ray,
@@ -267,9 +297,11 @@ namespace TiltBrush
             return true;
         }
 
-        /// @brief Update the hover scale for a panel button
-        /// @param buttonCollider The collider of the button to update.
-        /// @param isHovered True when the button is hovered.
+        /// <summary>
+        /// Update the hover scale for a panel button
+        /// </summary>
+        /// <param name="buttonCollider">The collider of the button to update.</param>
+        /// <param name="isHovered">True when the button is hovered.</param>
         private void SetButtonHoverVisual(Collider buttonCollider, bool isHovered)
         {
             if (buttonCollider == m_SaveButtonCollider && m_SaveButtonHoverTarget != null)
@@ -286,14 +318,18 @@ namespace TiltBrush
             }
         }
 
-        /// @brief Apply the configured panel size without accumulating scale changes
+        /// <summary>
+        /// Apply the configured panel size without accumulating scale changes
+        /// </summary>
         private void ApplyPanelScale()
         {
             transform.localScale = m_InitialLocalScale * m_SizeMultiplier;
         }
 
-        /// @brief Handle a press on a Markov drawing panel button
-        /// @param buttonCollider The collider of the pressed button.
+        /// <summary>
+        /// Handle a press on a Markov drawing panel button
+        /// </summary>
+        /// <param name="buttonCollider">The collider of the pressed button.</param>
         public void OnButtonPressed(Collider buttonCollider)
         {
             if (buttonCollider != m_SaveButtonCollider &&

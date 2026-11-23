@@ -561,7 +561,7 @@ namespace TiltBrush
             /// 
             /// <param name="v"> 
             /// The original vector
-            /// <param>
+            /// </param>
             /// 
             /// <returns>
             /// A vector that corresponds to the original vector 
