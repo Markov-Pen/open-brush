@@ -19,8 +19,7 @@ using UnityEngine;
 namespace TiltBrush
 {
     partial class MarkovPen
-    {
-        
+    { 
         /// <summary>
         /// Represents the synthesis engine of a Markov Pen 
         /// that generates associations of the target mapping
@@ -71,7 +70,7 @@ namespace TiltBrush
 
                 return generatedPoints;
             }
-
+        
             ///<summary>
             ///Generates a pair of variates independently drawn from the standard normal distribution
             ///</summary>   
