@@ -200,7 +200,10 @@ namespace TiltBrush
             OpenTexturePicker = 9001,
             MergeBrushStrokes = 10000,
             RepaintOptions = 11500,
-            OpenNumericInputPopup = 12000
+            OpenNumericInputPopup = 12000,
+            MarkovPenOptions = 13000,
+            MarkovPen2DOptions = 13001,
+            MarkovPen3DOptions = 13002
         }
 
         public enum ControlsType
@@ -1076,11 +1079,27 @@ namespace TiltBrush
                 // update tools.
                 if (bWidgetGrabOK && !m_GrabBrush.grabbingWorld)
                 {
-                    if (m_CurrentGazeObject != -1 && !m_WorldBeingGrabbed && !MarkovPenDrawingPanel.IsOpen)
+                    bool allowInteraction = !MarkovPenDrawingPanel.IsOpen;
+
+                    if (m_CurrentGazeObject >= 0 &&
+                        m_CurrentGazeObject < m_PanelManager.GetAllPanels().Count)
+                    {
+                        BasePanel currentPanel =
+                            m_PanelManager.GetPanel(m_CurrentGazeObject);
+
+                        allowInteraction =
+                            !MarkovPenDrawingPanel.IsOpen ||
+                            (currentPanel != null &&
+                            currentPanel.PanelPopUp is MarkovPen2DPopUpWindow);
+                    }
+
+                    if (m_CurrentGazeObject >= 0 &&
+                        m_CurrentGazeObject < m_PanelManager.GetAllPanels().Count &&
+                        !m_WorldBeingGrabbed &&
+                        allowInteraction)
                     {
                         UpdateActiveGazeObject();
 
-                        // Allow for standard input (like Undo / Redo) even when gazing at a panel.
                         if (m_CurrentInputState == InputState.Standard)
                         {
                             UpdateStandardInput();
@@ -1088,6 +1107,11 @@ namespace TiltBrush
                     }
                     else
                     {
+                        // Hide the UI cursor when interaction is blocked.
+                        if (MarkovPenDrawingPanel.IsOpen && !allowInteraction)
+                        {
+                            m_UIReticle.SetActive(false);
+                        }
                         //standard input, no gaze object
                         if (m_InputStateConfigs[(int)m_CurrentInputState].m_AllowMovement)
                         {
@@ -1343,7 +1367,7 @@ namespace TiltBrush
                 bScaleInputActive
                 && !InputManager.m_Instance.GetCommand(InputManager.SketchCommands.Activate)
                 && m_GrabBrush.grabbingWorld == false
-                && m_CurrentGazeObject == -1 // free up swipe for use by gaze object
+                && m_CurrentGazeObject == -1                                                                     // free up swipe for use by gaze object
                 && (m_ControlsType != ControlsType.SixDofControllers || InputManager.Brush.IsTrackedObjectValid) // TODO:Mikesky - very hacky
                 && SketchSurfacePanel.m_Instance.ActiveTool.m_Type != BaseTool.ToolType.MultiCamTool;
 
@@ -1415,7 +1439,7 @@ namespace TiltBrush
                     camTool.ExternalObjectNextCameraStyle(); // For monoscopic mode
                 }
                 else if (InputManager.m_Instance.GetKeyboardShortcutDown(
-                             InputManager.KeyboardShortcut.ViewOnly))
+                    InputManager.KeyboardShortcut.ViewOnly))
                 {
                     IssueGlobalCommand(GlobalCommands.ViewOnly);
                 }
@@ -1528,7 +1552,7 @@ namespace TiltBrush
                     App.Instance.SetDesiredState(App.AppState.LoadingBrushesAndLighting);
                 }
                 else if (InputManager.m_Instance.GetKeyboardShortcutDown(
-                             InputManager.KeyboardShortcut.FlyMode))
+                    InputManager.KeyboardShortcut.FlyMode))
                 {
                     SketchSurfacePanel.m_Instance.EnableSpecificTool(BaseTool.ToolType.FlyTool);
                 }
@@ -1561,7 +1585,7 @@ namespace TiltBrush
             if (!m_PanelManager.AdvancedModeActive() &&
                 InputManager.m_Instance.GetCommandDown(InputManager.SketchCommands.ToggleDefaultTool) &&
                 !m_SketchSurfacePanel.IsDefaultToolEnabled() &&
-                m_SketchSurfacePanel.ActiveTool.AllowDefaultToolToggle() && m_CurrentGazeObject == -1)// don't allow tool to change while pointing at panel because there is no visual indication
+                m_SketchSurfacePanel.ActiveTool.AllowDefaultToolToggle() && m_CurrentGazeObject == -1) // don't allow tool to change while pointing at panel because there is no visual indication
             {
                 m_SketchSurfacePanel.EnableDefaultTool();
                 AudioManager.m_Instance.PlayPinCushionSound(true);
@@ -2983,12 +3007,12 @@ namespace TiltBrush
             int iPrevGazeObject = m_CurrentGazeObject;
             m_CurrentGazeObject = -1;
             bool bGazeAllowed = (m_CurrentInputState == InputState.Standard)
-                && !InputManager.m_Instance.GetCommand(InputManager.SketchCommands.Activate)
-                && !m_SketchSurfacePanel.ActiveTool.InputBlocked()
-                && (m_GrabWidgetState == GrabWidgetState.None)
-                && !m_GrabBrush.grabbingWorld
-                && !m_PinCushion.IsShowing()
-                && !PointerManager.MainPointerIsPainting()
+                    && !InputManager.m_Instance.GetCommand(InputManager.SketchCommands.Activate)
+                    && !m_SketchSurfacePanel.ActiveTool.InputBlocked()
+                    && (m_GrabWidgetState == GrabWidgetState.None)
+                    && !m_GrabBrush.grabbingWorld
+                    && !m_PinCushion.IsShowing()
+                    && !PointerManager.MainPointerIsPainting()
                 ;
 
             bool bGazeDeactivationOverrideWithInput = false;
